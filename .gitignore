@@ -4,9 +4,6 @@ __pycache__/
 *.py[cod]
 *.sqlite3
 *.log
-.pytest_cache/
-.coverage
-htmlcov/
 staticfiles/
 .idea/
 .vscode/
