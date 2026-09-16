@@ -1,0 +1,59 @@
+{% extends 'financas/base.html' %}
+{% load financas_tags %}
+
+{% block title %}Orçamentos{% endblock %}
+{% block caminho %}Orçamentos{% endblock %}
+
+{% block content %}
+<header class="cabecalho-pagina">
+    <div>
+        <p class="sobretitulo">Planejamento mensal</p>
+        <h1>Orçamentos</h1>
+        <p class="subtitulo">Defina limites por categoria e acompanhe os valores comprometidos.</p>
+    </div>
+    <a class="botao botao-primario" href="{% url 'financas:orcamento_criar' %}"><span aria-hidden="true">+</span> Novo orçamento</a>
+</header>
+
+<section class="painel painel-filtros" aria-labelledby="titulo-periodo">
+    <h2 id="titulo-periodo" class="titulo-pequeno">Escolha o período</h2>
+    <form method="get" class="formulario-filtros">
+        {% for field in filtro %}
+            <div class="campo">
+                {{ field.label_tag }}
+                {{ field }}
+                {% for error in field.errors %}<p class="erro-campo">{{ error }}</p>{% endfor %}
+            </div>
+        {% endfor %}
+        <div class="acoes-filtro"><button class="botao botao-primario" type="submit">Consultar</button><a class="link-discreto" href="?">Mês atual</a></div>
+        {% if filtro.non_field_errors %}<div class="erros-formulario">{{ filtro.non_field_errors }}</div>{% endif %}
+    </form>
+</section>
+
+{% if resumos %}
+    <section class="orcamentos-grade" aria-label="Orçamentos do período">
+        {% for resumo in resumos %}
+            <article class="painel cartao-orcamento{% if resumo.excedido %} orcamento-excedido{% endif %}">
+                <header class="orcamento-cabecalho">
+                    <div><p class="sobretitulo">{{ resumo.orcamento.mes|stringformat:"02d" }}/{{ resumo.orcamento.ano }}</p><h2>{{ resumo.orcamento.categoria }}</h2></div>
+                    {% if resumo.excedido %}<span class="etiqueta etiqueta-perigo">Limite excedido</span>{% else %}<span class="etiqueta etiqueta-sucesso">Dentro do limite</span>{% endif %}
+                </header>
+                <div class="orcamento-limite"><span>Limite mensal</span><strong>{{ resumo.orcamento.limite|dinheiro }}</strong></div>
+                <dl class="orcamento-valores">
+                    <div><dt>Comprometido</dt><dd>{{ resumo.comprometido|dinheiro }}</dd></div>
+                    <div><dt>Disponível</dt><dd{% if resumo.excedido %} class="texto-perigo"{% endif %}>{{ resumo.disponivel|dinheiro }}</dd></div>
+                </dl>
+                <p class="orcamento-percentual"><strong>{{ resumo.percentual|floatformat:"0" }}%</strong> do limite comprometido</p>
+                {% if resumo.excedido %}<p class="orcamento-alerta">Os valores comprometidos ultrapassam o limite deste orçamento.</p>{% endif %}
+                <footer class="orcamento-acoes"><a href="{% url 'financas:orcamento_editar' resumo.orcamento.pk %}">Editar orçamento</a><a class="link-perigo" href="{% url 'financas:orcamento_excluir' resumo.orcamento.pk %}">Excluir<span class="apenas-leitor"> orçamento de {{ resumo.orcamento.categoria }}</span></a></footer>
+            </article>
+        {% endfor %}
+    </section>
+{% else %}
+    <section class="painel estado-vazio" aria-labelledby="sem-orcamentos">
+        <span class="vazio-simbolo" aria-hidden="true">+</span>
+        <h2 id="sem-orcamentos">Um plano começa com um limite</h2>
+        <p>Nenhum orçamento encontrado para o período. Cadastre um limite mensal para uma categoria de despesa.</p>
+        <a class="botao botao-primario" href="{% url 'financas:orcamento_criar' %}">Criar orçamento</a>
+    </section>
+{% endif %}
+{% endblock %}

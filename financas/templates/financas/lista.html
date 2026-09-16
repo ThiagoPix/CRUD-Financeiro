@@ -1,0 +1,72 @@
+{% extends 'financas/base.html' %}
+
+{% block content %}
+<header class="cabecalho-pagina">
+    <div>
+        <p class="sobretitulo">Seu controle financeiro</p>
+        <h1>{{ titulo }}</h1>
+        {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
+    </div>
+    <a class="botao botao-primario" href="{{ criar_url }}"><span aria-hidden="true">+</span> Novo registro</a>
+</header>
+
+{% if filtro %}
+<section class="painel painel-filtros" aria-labelledby="titulo-filtros">
+    <h2 id="titulo-filtros" class="titulo-pequeno">Filtrar registros</h2>
+    <form method="get" class="formulario-filtros">
+        {% for field in filtro %}
+            <div class="campo">
+                {{ field.label_tag }}
+                {{ field }}
+                {% for error in field.errors %}<p class="erro-campo">{{ error }}</p>{% endfor %}
+            </div>
+        {% endfor %}
+        <div class="acoes-filtro">
+            <button class="botao botao-primario" type="submit">Aplicar filtros</button>
+            <a class="link-discreto" href="?">Limpar</a>
+        </div>
+        {% if filtro.non_field_errors %}<div class="erros-formulario">{{ filtro.non_field_errors }}</div>{% endif %}
+    </form>
+</section>
+{% endif %}
+
+<section class="painel painel-registros" aria-label="Registros de {{ titulo|lower }}">
+    <div class="painel-cabecalho">
+        <h2 class="titulo-pequeno">Seus registros</h2>
+        <span class="contador">{{ linhas|length }} registro{{ linhas|length|pluralize }}</span>
+    </div>
+    {% if linhas %}
+        <div class="tabela-rolagem" role="region" aria-label="Tabela de {{ titulo|lower }}" tabindex="0">
+            <table>
+                <thead>
+                    <tr>
+                        {% for coluna in colunas %}<th scope="col">{{ coluna }}</th>{% endfor %}
+                        <th scope="col" class="coluna-acoes">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for linha in linhas %}
+                        <tr>
+                            {% for celula in linha.celulas %}<td>{{ celula|default_if_none:"—" }}</td>{% endfor %}
+                            <td>
+                                <div class="acoes-tabela">
+                                    {% if linha.detalhe_url %}<a href="{{ linha.detalhe_url }}">Detalhes<span class="apenas-leitor"> de {{ linha.celulas.0 }}</span></a>{% endif %}
+                                    <a href="{{ linha.editar_url }}">Editar<span class="apenas-leitor"> {{ linha.celulas.0 }}</span></a>
+                                    <a href="{{ linha.excluir_url }}" class="link-perigo">Excluir<span class="apenas-leitor"> {{ linha.celulas.0 }}</span></a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="estado-vazio">
+            <span class="vazio-simbolo" aria-hidden="true">+</span>
+            <h2>Nenhum registro por aqui</h2>
+            <p>{{ vazio|default:"Adicione seu primeiro registro para começar a organizar suas finanças." }}</p>
+            <a class="botao botao-primario" href="{{ criar_url }}">Adicionar registro</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#183e35">
+    <title>{% block title %}{{ titulo|default:"Controle Financeiro" }}{% endblock %} · Controle Financeiro</title>
+    <link rel="stylesheet" href="{% static 'financas/estilo.css' %}">
+</head>
+<body>
+    <a class="pular-conteudo" href="#conteudo">Pular para o conteúdo</a>
+    <div class="estrutura">
+        <aside class="lateral">
+            <a class="marca" href="{% url 'financas:inicio' %}" aria-label="Controle Financeiro — início">
+                <span class="marca-simbolo" aria-hidden="true">cf.</span>
+                <span>Controle<br><strong>Financeiro</strong></span>
+            </a>
+            <div class="lateral-separador"></div>
+            <p class="nav-rotulo">Seu planejamento</p>
+            <nav class="navegacao" aria-label="Navegação principal">
+                <a href="{% url 'financas:conta_lista' %}" {% if secao == 'contas' %}aria-current="page"{% endif %}><span class="nav-indice" aria-hidden="true">01</span>Contas</a>
+                <a href="{% url 'financas:categoria_lista' %}" {% if secao == 'categorias' %}aria-current="page"{% endif %}><span class="nav-indice" aria-hidden="true">02</span>Categorias</a>
+                <a href="{% url 'financas:lancamento_lista' %}" {% if secao == 'lancamentos' %}aria-current="page"{% endif %}><span class="nav-indice" aria-hidden="true">03</span>Lançamentos</a>
+                <a href="{% url 'financas:orcamento_lista' %}" {% if secao == 'orcamentos' %}aria-current="page"{% endif %}><span class="nav-indice" aria-hidden="true">04</span>Orçamentos</a>
+            </nav>
+            <div class="lateral-rodape">
+                <span class="lateral-ponto" aria-hidden="true"></span>
+                <p>Organize o presente.<br>Planeje os próximos passos.</p>
+            </div>
+        </aside>
+        <div class="area-principal">
+            <header class="barra-superior">
+                <span class="barra-rotulo">Finanças pessoais</span>
+                <span class="barra-marca" aria-hidden="true">Tudo em seu lugar.</span>
+            </header>
+            <main id="conteudo" class="conteudo" tabindex="-1">
+                <nav class="caminho" aria-label="Você está aqui">
+                    <a href="{% url 'financas:inicio' %}">Início</a>
+                    <span aria-hidden="true">/</span>
+                    <span>{% block caminho %}{{ titulo|default:"Finanças" }}{% endblock %}</span>
+                </nav>
+                {% if messages %}
+                    <div class="mensagens" aria-live="polite">
+                        {% for message in messages %}
+                            <div class="mensagem {{ message.tags }}" role="status">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% block content %}{% endblock %}
+            </main>
+            <footer class="rodape">Controle Financeiro <span aria-hidden="true">·</span> Clareza para suas escolhas.</footer>
+        </div>
+    </div>
+</body>
+</html>

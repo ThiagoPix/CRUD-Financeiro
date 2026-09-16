@@ -1,0 +1,62 @@
+{% extends 'financas/base.html' %}
+{% load financas_tags %}
+
+{% block title %}{{ lancamento.descricao }}{% endblock %}
+{% block caminho %}<a href="{% url 'financas:lancamento_lista' %}">Lançamentos</a><span aria-hidden="true">/</span><span>Detalhes</span>{% endblock %}
+
+{% block content %}
+<header class="cabecalho-pagina">
+    <div>
+        <p class="sobretitulo">Detalhes do lançamento</p>
+        <h1>{{ lancamento.descricao }}</h1>
+        <p class="subtitulo">Acompanhe os dados e as parcelas deste lançamento.</p>
+    </div>
+    <div class="grupo-botoes">
+        <a class="botao botao-secundario" href="{% url 'financas:lancamento_lista' %}">Voltar</a>
+        <a class="botao botao-primario" href="{% url 'financas:lancamento_editar' lancamento.pk %}">Editar lançamento</a>
+    </div>
+</header>
+
+<section class="valores-grade" aria-label="Valores do lançamento">
+    <div class="cartao-valor cartao-valor-principal"><span>Valor total</span><strong>{{ lancamento.valor_total|dinheiro }}</strong><span class="valor-legenda">{{ lancamento.get_tipo_display }}</span></div>
+    <div class="cartao-valor"><span>Total pago</span><strong>{{ total_pago|dinheiro }}</strong><span class="valor-legenda">Parcelas marcadas como pagas</span></div>
+    <div class="cartao-valor"><span>Total pendente</span><strong>{{ total_pendente|dinheiro }}</strong><span class="valor-legenda">Parcelas ainda em aberto</span></div>
+</section>
+
+<section class="painel" aria-labelledby="dados-lancamento">
+    <div class="painel-cabecalho"><h2 id="dados-lancamento" class="titulo-pequeno">Sobre o lançamento</h2><a class="link-perigo" href="{% url 'financas:lancamento_excluir' lancamento.pk %}">Excluir lançamento</a></div>
+    <dl class="detalhes-grade">
+        <div><dt>Conta</dt><dd>{{ lancamento.conta }}</dd></div>
+        <div><dt>Categoria</dt><dd>{{ lancamento.categoria }}</dd></div>
+        <div><dt>Data do lançamento</dt><dd>{{ lancamento.data|date:"d/m/Y" }}</dd></div>
+        <div><dt>Primeiro vencimento</dt><dd>{{ lancamento.primeiro_vencimento|date:"d/m/Y" }}</dd></div>
+        <div><dt>Quantidade de parcelas</dt><dd>{{ lancamento.quantidade_parcelas }}</dd></div>
+        <div><dt>Tipo</dt><dd>{{ lancamento.get_tipo_display }}</dd></div>
+    </dl>
+</section>
+
+<section class="painel painel-registros" aria-labelledby="titulo-parcelas">
+    <div class="painel-cabecalho"><h2 id="titulo-parcelas" class="titulo-pequeno">Parcelas</h2><span class="contador">{{ parcelas|length }} parcela{{ parcelas|length|pluralize }}</span></div>
+    {% if parcelas %}
+        <div class="tabela-rolagem" role="region" aria-label="Parcelas deste lançamento" tabindex="0">
+            <table>
+                <thead><tr><th scope="col">Parcela</th><th scope="col">Vencimento</th><th scope="col">Valor</th><th scope="col">Situação</th><th scope="col" class="coluna-acoes">Ações</th></tr></thead>
+                <tbody>
+                    {% for parcela in parcelas %}
+                        <tr>
+                            <th scope="row">{{ parcela.numero }} de {{ lancamento.quantidade_parcelas }}</th>
+                            <td>{{ parcela.vencimento|date:"d/m/Y" }}</td>
+                            <td class="valor-tabela">{{ parcela.valor|dinheiro }}</td>
+                            <td>{% if parcela.paga %}<span class="etiqueta etiqueta-sucesso">Paga</span>{% else %}<span class="etiqueta etiqueta-pendente">Pendente</span>{% endif %}</td>
+                            <td><a href="{% url 'financas:parcela_editar' parcela.pk %}">Editar parcela<span class="apenas-leitor"> {{ parcela.numero }}</span></a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="estado-vazio estado-vazio-compacto"><h3>Nenhuma parcela encontrada</h3><p>Confira os dados do lançamento.</p></div>
+    {% endif %}
+    <p class="nota-painel">Para alterar a quantidade de parcelas, edite o lançamento.</p>
+</section>
+{% endblock %}

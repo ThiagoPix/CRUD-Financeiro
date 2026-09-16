@@ -1,0 +1,48 @@
+{% extends 'financas/base.html' %}
+
+{% block content %}
+<header class="cabecalho-pagina">
+    <div>
+        <p class="sobretitulo">Organização em cada detalhe</p>
+        <h1>{{ titulo }}</h1>
+        {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
+    </div>
+    <a class="botao botao-secundario" href="{{ voltar_url }}"><span aria-hidden="true">←</span> Voltar</a>
+</header>
+
+<section class="painel painel-formulario" aria-labelledby="dados-registro">
+    <div class="painel-cabecalho">
+        <h2 id="dados-registro" class="titulo-pequeno">Dados do registro</h2>
+        <span class="nota-obrigatorios">* Campos obrigatórios</span>
+    </div>
+    <form method="post" class="formulario">
+        {% csrf_token %}
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        {% if form.non_field_errors %}
+            <div class="erros-formulario" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+        {% if form.errors %}<p class="aviso-validacao" role="alert">Revise os campos indicados para salvar o registro.</p>{% endif %}
+        <div class="campos-grade">
+            {% for field in form.visible_fields %}
+                <div class="campo{% if field.errors %} campo-com-erro{% endif %}{% if field.name == 'descricao' or field.name == 'observacoes' %} campo-inteiro{% endif %}{% if field.field.widget.input_type == 'checkbox' %} campo-checkbox{% endif %}">
+                    {% if field.field.widget.input_type == 'checkbox' %}
+                        <div class="linha-checkbox">
+                            {{ field }}
+                            <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="obrigatorio" aria-hidden="true">*</span>{% endif %}</label>
+                        </div>
+                    {% else %}
+                        <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="obrigatorio" aria-hidden="true">*</span>{% endif %}</label>
+                        {{ field }}
+                    {% endif %}
+                    {% if field.help_text %}<div class="ajuda-campo" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</div>{% endif %}
+                    {% if field.errors %}<div id="{{ field.auto_id }}_error">{% for error in field.errors %}<p class="erro-campo">{{ error }}</p>{% endfor %}</div>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="formulario-rodape">
+            <a class="botao botao-secundario" href="{{ voltar_url }}">Cancelar</a>
+            <button class="botao botao-primario" type="submit">Salvar registro <span aria-hidden="true">→</span></button>
+        </div>
+    </form>
+</section>
+{% endblock %}
