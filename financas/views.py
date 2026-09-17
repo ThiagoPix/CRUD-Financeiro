@@ -78,7 +78,7 @@ def inicio(request):
 def conta_lista(request):
     linhas = [{"celulas": [conta.nome, conta.get_tipo_display()], **acoes(conta, "conta")} for conta in Conta.objects.all()]
     return render(request, "financas/lista.html", {
-        "titulo": "Contas", "subtitulo": "Organize onde seu dinheiro entra e sai.",
+        "titulo": "Contas", "subtitulo": "Carteira, conta corrente, poupança. Cada uma no seu lugar.",
         "secao": "contas", "colunas": ["Nome", "Tipo"], "linhas": linhas,
         "criar_url": reverse("financas:conta_criar"), "vazio": "Cadastre sua primeira conta para começar a registrar movimentações.",
     })
@@ -103,7 +103,7 @@ def conta_excluir(request, pk):
 def categoria_lista(request):
     linhas = [{"celulas": [categoria.nome, categoria.get_tipo_display()], **acoes(categoria, "categoria")} for categoria in Categoria.objects.all()]
     return render(request, "financas/lista.html", {
-        "titulo": "Categorias", "subtitulo": "Dê um destino claro a cada receita e despesa.",
+        "titulo": "Categorias", "subtitulo": "Os nomes que fazem sentido para o seu dia a dia.",
         "secao": "categorias", "colunas": ["Nome", "Tipo"], "linhas": linhas,
         "criar_url": reverse("financas:categoria_criar"), "vazio": "Cadastre categorias de receita e despesa para classificar seus lançamentos.",
     })
@@ -133,7 +133,7 @@ def lancamento_lista(request):
         **acoes(item, "lancamento"),
     } for item in lancamentos]
     return render(request, "financas/lista.html", {
-        "titulo": "Lançamentos", "subtitulo": "Suas receitas e despesas, com cada parcela no lugar.",
+        "titulo": "Lançamentos", "subtitulo": "Entradas, saídas e o que ficou para o próximo mês.",
         "secao": "lancamentos", "colunas": ["Descrição", "Tipo", "Conta", "Categoria", "Valor total", "Data", "Parcelas"],
         "linhas": linhas, "criar_url": reverse("financas:lancamento_criar"),
         "vazio": "Comece cadastrando uma conta e uma categoria. Depois, registre seu primeiro lançamento.",

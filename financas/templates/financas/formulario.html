@@ -3,13 +3,13 @@
 {% block content %}
 <header class="cabecalho-pagina">
     <div>
-        <p class="sobretitulo">Organização em cada detalhe</p>
         <h1>{{ titulo }}</h1>
         {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
     </div>
-    <a class="botao botao-secundario" href="{{ voltar_url }}"><span aria-hidden="true">←</span> Voltar</a>
+    <a class="botao botao-secundario" href="{{ voltar_url }}">Voltar</a>
 </header>
 
+<div class="pagina-formulario">
 <section class="painel painel-formulario" aria-labelledby="dados-registro">
     <div class="painel-cabecalho">
         <h2 id="dados-registro" class="titulo-pequeno">Dados do registro</h2>
@@ -41,8 +41,32 @@
         </div>
         <div class="formulario-rodape">
             <a class="botao botao-secundario" href="{{ voltar_url }}">Cancelar</a>
-            <button class="botao botao-primario" type="submit">Salvar registro <span aria-hidden="true">→</span></button>
+            <button class="botao botao-primario" type="submit">{% if secao == 'contas' %}Salvar conta{% elif secao == 'categorias' %}Salvar categoria{% elif secao == 'orcamentos' %}Salvar orçamento{% elif form.quantidade_parcelas %}Salvar lançamento{% else %}Salvar parcela{% endif %}</button>
         </div>
     </form>
 </section>
+<aside class="nota-lateral" aria-labelledby="nota-formulario">
+    {% if secao == 'contas' %}
+        <h2 id="nota-formulario">Identifique a conta</h2>
+        <p>Use um nome que diferencie esta conta das demais, como o nome do banco ou “Carteira”.</p>
+        <p>Ela ficará disponível ao registrar suas receitas e despesas.</p>
+    {% elif secao == 'categorias' %}
+        <h2 id="nota-formulario">Classifique a movimentação</h2>
+        <p>O tipo da categoria define se os lançamentos vinculados são receitas ou despesas.</p>
+        <p>As categorias de despesa também podem receber um limite mensal nos orçamentos.</p>
+    {% elif secao == 'orcamentos' %}
+        <h2 id="nota-formulario">Um limite por período</h2>
+        <p>Escolha uma categoria de despesa e o mês que deseja acompanhar.</p>
+        <p>Cada categoria pode ter um orçamento por mês. Para mudar um limite já cadastrado, edite o orçamento correspondente.</p>
+    {% elif form.quantidade_parcelas %}
+        <h2 id="nota-formulario">Sobre as parcelas</h2>
+        <p>Informe o valor completo do lançamento. Ele será dividido pela quantidade de parcelas escolhida.</p>
+        <p>Para um pagamento único, use uma parcela. Depois de salvar, você poderá acompanhar e atualizar os pagamentos.</p>
+    {% else %}
+        <h2 id="nota-formulario">Atualize o pagamento</h2>
+        <p>Marque a parcela como paga quando o pagamento tiver sido realizado.</p>
+        <p>O valor vem do lançamento. Aqui, você pode ajustar o vencimento e a situação de pagamento.</p>
+    {% endif %}
+</aside>
+</div>
 {% endblock %}

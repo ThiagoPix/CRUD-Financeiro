@@ -1,13 +1,12 @@
 {% extends 'financas/base.html' %}
 
 {% block content %}
-<header class="cabecalho-pagina">
+<header class="cabecalho-pagina cabecalho-lista">
     <div>
-        <p class="sobretitulo">Seu controle financeiro</p>
-        <h1>{{ titulo }}</h1>
+        <h1>{{ titulo }}<span class="ponto-titulo" aria-hidden="true">.</span></h1>
         {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
     </div>
-    <a class="botao botao-primario" href="{{ criar_url }}"><span aria-hidden="true">+</span> Novo registro</a>
+    <a class="botao botao-primario" href="{{ criar_url }}"><span aria-hidden="true">+</span> {% if secao == 'contas' %}Nova conta{% elif secao == 'categorias' %}Nova categoria{% else %}Novo lançamento{% endif %}</a>
 </header>
 
 {% if filtro %}
@@ -15,16 +14,9 @@
     <h2 id="titulo-filtros" class="titulo-pequeno">Filtrar registros</h2>
     <form method="get" class="formulario-filtros">
         {% for field in filtro %}
-            <div class="campo">
-                {{ field.label_tag }}
-                {{ field }}
-                {% for error in field.errors %}<p class="erro-campo">{{ error }}</p>{% endfor %}
-            </div>
+            <div class="campo">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<p class="erro-campo">{{ error }}</p>{% endfor %}</div>
         {% endfor %}
-        <div class="acoes-filtro">
-            <button class="botao botao-primario" type="submit">Aplicar filtros</button>
-            <a class="link-discreto" href="?">Limpar</a>
-        </div>
+        <div class="acoes-filtro"><button class="botao botao-primario" type="submit">Filtrar</button><a class="link-discreto" href="?">Limpar</a></div>
         {% if filtro.non_field_errors %}<div class="erros-formulario">{{ filtro.non_field_errors }}</div>{% endif %}
     </form>
 </section>
@@ -32,40 +24,39 @@
 
 <section class="painel painel-registros" aria-label="Registros de {{ titulo|lower }}">
     <div class="painel-cabecalho">
-        <h2 class="titulo-pequeno">Seus registros</h2>
-        <span class="contador">{{ linhas|length }} registro{{ linhas|length|pluralize }}</span>
+        <h2 class="titulo-pequeno">{% if secao == 'lancamentos' %}Movimentações{% elif secao == 'contas' %}Onde o dinheiro fica{% else %}Receitas e despesas{% endif %}</h2>
+        <span class="contador">{{ linhas|length|stringformat:"02d" }} <span>registro{{ linhas|length|pluralize }}</span></span>
     </div>
     {% if linhas %}
         <div class="tabela-rolagem" role="region" aria-label="Tabela de {{ titulo|lower }}" tabindex="0">
             <table>
-                <thead>
-                    <tr>
-                        {% for coluna in colunas %}<th scope="col">{{ coluna }}</th>{% endfor %}
-                        <th scope="col" class="coluna-acoes">Ações</th>
-                    </tr>
-                </thead>
+                <thead><tr>{% for coluna in colunas %}<th scope="col">{{ coluna }}</th>{% endfor %}<th scope="col" class="coluna-acoes">Ações</th></tr></thead>
                 <tbody>
                     {% for linha in linhas %}
                         <tr>
                             {% for celula in linha.celulas %}<td>{{ celula|default_if_none:"—" }}</td>{% endfor %}
-                            <td>
-                                <div class="acoes-tabela">
-                                    {% if linha.detalhe_url %}<a href="{{ linha.detalhe_url }}">Detalhes<span class="apenas-leitor"> de {{ linha.celulas.0 }}</span></a>{% endif %}
-                                    <a href="{{ linha.editar_url }}">Editar<span class="apenas-leitor"> {{ linha.celulas.0 }}</span></a>
-                                    <a href="{{ linha.excluir_url }}" class="link-perigo">Excluir<span class="apenas-leitor"> {{ linha.celulas.0 }}</span></a>
-                                </div>
-                            </td>
+                            <td><div class="acoes-tabela">
+                                {% if linha.detalhe_url %}<a href="{{ linha.detalhe_url }}">Abrir<span class="apenas-leitor"> {{ linha.celulas.0 }}</span> <span aria-hidden="true">↗</span></a>{% endif %}
+                                <a href="{{ linha.editar_url }}">Editar<span class="apenas-leitor"> {{ linha.celulas.0 }}</span></a>
+                                <a href="{{ linha.excluir_url }}" class="link-perigo">Excluir<span class="apenas-leitor"> {{ linha.celulas.0 }}</span></a>
+                            </div></td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+        <p class="nota-rolagem">Deslize a tabela para ver todas as colunas.</p>
     {% else %}
-        <div class="estado-vazio">
-            <span class="vazio-simbolo" aria-hidden="true">+</span>
-            <h2>Nenhum registro por aqui</h2>
-            <p>{{ vazio|default:"Adicione seu primeiro registro para começar a organizar suas finanças." }}</p>
-            <a class="botao botao-primario" href="{{ criar_url }}">Adicionar registro</a>
+        <div class="estado-vazio estado-vazio-lista">
+            <div class="vazio-abertura">
+                <span class="vazio-numero" aria-hidden="true">0<span>—</span></span>
+                <h2>{% if secao == 'contas' %}Suas contas<br>começam aqui.{% elif secao == 'categorias' %}Cada coisa<br>em sua categoria.{% else %}A primeira linha<br>é sua.{% endif %}</h2>
+            </div>
+            <div class="vazio-instrucoes">
+                <p>{{ vazio }}</p>
+                <a class="link-acao" href="{{ criar_url }}">{% if secao == 'contas' %}Cadastrar uma conta{% elif secao == 'categorias' %}Criar uma categoria{% else %}Registrar um lançamento{% endif %} <span aria-hidden="true">↗</span></a>
+                {% if secao == 'lancamentos' %}<div class="primeiros-passos"><span>Ainda não cadastrou?</span><a href="{% url 'financas:conta_criar' %}">Criar conta</a><a href="{% url 'financas:categoria_criar' %}">Criar categoria</a></div>{% endif %}
+            </div>
         </div>
     {% endif %}
 </section>

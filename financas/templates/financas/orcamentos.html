@@ -7,15 +7,14 @@
 {% block content %}
 <header class="cabecalho-pagina">
     <div>
-        <p class="sobretitulo">Planejamento mensal</p>
         <h1>Orçamentos</h1>
-        <p class="subtitulo">Defina limites por categoria e acompanhe os valores comprometidos.</p>
+        <p class="subtitulo">Limites mensais por categoria de despesa.</p>
     </div>
-    <a class="botao botao-primario" href="{% url 'financas:orcamento_criar' %}"><span aria-hidden="true">+</span> Novo orçamento</a>
+    <a class="botao botao-primario" href="{% url 'financas:orcamento_criar' %}">Novo orçamento</a>
 </header>
 
 <section class="painel painel-filtros" aria-labelledby="titulo-periodo">
-    <h2 id="titulo-periodo" class="titulo-pequeno">Escolha o período</h2>
+    <h2 id="titulo-periodo" class="titulo-pequeno">Período</h2>
     <form method="get" class="formulario-filtros">
         {% for field in filtro %}
             <div class="campo">
@@ -34,25 +33,24 @@
         {% for resumo in resumos %}
             <article class="painel cartao-orcamento{% if resumo.excedido %} orcamento-excedido{% endif %}">
                 <header class="orcamento-cabecalho">
-                    <div><p class="sobretitulo">{{ resumo.orcamento.mes|stringformat:"02d" }}/{{ resumo.orcamento.ano }}</p><h2>{{ resumo.orcamento.categoria }}</h2></div>
+                    <p class="orcamento-periodo"><time datetime="{{ resumo.orcamento.ano }}-{{ resumo.orcamento.mes|stringformat:'02d' }}">{{ resumo.orcamento.mes|stringformat:"02d" }} / {{ resumo.orcamento.ano }}</time></p>
+                    <h2>{{ resumo.orcamento.categoria }}</h2>
                     {% if resumo.excedido %}<span class="etiqueta etiqueta-perigo">Limite excedido</span>{% else %}<span class="etiqueta etiqueta-sucesso">Dentro do limite</span>{% endif %}
+                    <p class="orcamento-percentual"><strong>{{ resumo.percentual|floatformat:"0" }}%</strong> comprometido</p>
                 </header>
                 <div class="orcamento-limite"><span>Limite mensal</span><strong>{{ resumo.orcamento.limite|dinheiro }}</strong></div>
                 <dl class="orcamento-valores">
                     <div><dt>Comprometido</dt><dd>{{ resumo.comprometido|dinheiro }}</dd></div>
                     <div><dt>Disponível</dt><dd{% if resumo.excedido %} class="texto-perigo"{% endif %}>{{ resumo.disponivel|dinheiro }}</dd></div>
                 </dl>
-                <p class="orcamento-percentual"><strong>{{ resumo.percentual|floatformat:"0" }}%</strong> do limite comprometido</p>
-                {% if resumo.excedido %}<p class="orcamento-alerta">Os valores comprometidos ultrapassam o limite deste orçamento.</p>{% endif %}
-                <footer class="orcamento-acoes"><a href="{% url 'financas:orcamento_editar' resumo.orcamento.pk %}">Editar orçamento</a><a class="link-perigo" href="{% url 'financas:orcamento_excluir' resumo.orcamento.pk %}">Excluir<span class="apenas-leitor"> orçamento de {{ resumo.orcamento.categoria }}</span></a></footer>
+                <footer class="orcamento-acoes"><a href="{% url 'financas:orcamento_editar' resumo.orcamento.pk %}">Editar<span class="apenas-leitor"> orçamento de {{ resumo.orcamento.categoria }}</span></a><a class="link-perigo" href="{% url 'financas:orcamento_excluir' resumo.orcamento.pk %}">Excluir<span class="apenas-leitor"> orçamento de {{ resumo.orcamento.categoria }}</span></a></footer>
             </article>
         {% endfor %}
     </section>
 {% else %}
     <section class="painel estado-vazio" aria-labelledby="sem-orcamentos">
-        <span class="vazio-simbolo" aria-hidden="true">+</span>
-        <h2 id="sem-orcamentos">Um plano começa com um limite</h2>
-        <p>Nenhum orçamento encontrado para o período. Cadastre um limite mensal para uma categoria de despesa.</p>
+        <h2 id="sem-orcamentos">Nenhum orçamento neste período</h2>
+        <p>Escolha outro mês ou cadastre um limite para uma categoria de despesa.</p>
         <a class="botao botao-primario" href="{% url 'financas:orcamento_criar' %}">Criar orçamento</a>
     </section>
 {% endif %}
