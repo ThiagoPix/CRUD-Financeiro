@@ -8,7 +8,7 @@
 <header class="cabecalho-pagina">
     <div>
         <h1>Orçamentos</h1>
-        <p class="subtitulo">Limites mensais por categoria de despesa.</p>
+        <p class="subtitulo">Limites por categoria de despesa. Apenas parcelas pagas com vencimento no período reduzem o disponível.</p>
     </div>
     <a class="botao botao-primario" href="{% url 'financas:orcamento_criar' %}">Novo orçamento</a>
 </header>
@@ -36,11 +36,11 @@
                     <p class="orcamento-periodo"><time datetime="{{ resumo.orcamento.ano }}-{{ resumo.orcamento.mes|stringformat:'02d' }}">{{ resumo.orcamento.mes|stringformat:"02d" }} / {{ resumo.orcamento.ano }}</time></p>
                     <h2>{{ resumo.orcamento.categoria }}</h2>
                     {% if resumo.excedido %}<span class="etiqueta etiqueta-perigo">Limite excedido</span>{% else %}<span class="etiqueta etiqueta-sucesso">Dentro do limite</span>{% endif %}
-                    <p class="orcamento-percentual"><strong>{{ resumo.percentual|floatformat:"0" }}%</strong> comprometido</p>
+                    <p class="orcamento-percentual"><strong>{{ resumo.percentual|floatformat:"0" }}%</strong> do limite utilizado</p>
                 </header>
                 <div class="orcamento-limite"><span>Limite mensal</span><strong>{{ resumo.orcamento.limite|dinheiro }}</strong></div>
                 <dl class="orcamento-valores">
-                    <div><dt>Comprometido</dt><dd>{{ resumo.comprometido|dinheiro }}</dd></div>
+                    <div><dt>Pago</dt><dd>{{ resumo.comprometido|dinheiro }}</dd></div>
                     <div><dt>Disponível</dt><dd{% if resumo.excedido %} class="texto-perigo"{% endif %}>{{ resumo.disponivel|dinheiro }}</dd></div>
                 </dl>
                 <footer class="orcamento-acoes"><a href="{% url 'financas:orcamento_editar' resumo.orcamento.pk %}">Editar<span class="apenas-leitor"> orçamento de {{ resumo.orcamento.categoria }}</span></a><a class="link-perigo" href="{% url 'financas:orcamento_excluir' resumo.orcamento.pk %}">Excluir<span class="apenas-leitor"> orçamento de {{ resumo.orcamento.categoria }}</span></a></footer>

@@ -59,6 +59,7 @@ def totais_orcamento(orcamento):
         lancamento__categoria__tipo=Categoria.Tipo.DESPESA,
         vencimento__month=orcamento.mes,
         vencimento__year=orcamento.ano,
+        paga=True,
     ).values_list("valor", flat=True)
     comprometido = sum(valores, Decimal("0.00"))
     disponivel = orcamento.limite - comprometido
