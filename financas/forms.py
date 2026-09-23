@@ -50,10 +50,16 @@ class LancamentoForm(forms.ModelForm):
             "quantidade_parcelas": forms.NumberInput(attrs={"min": 1, "max": 120}),
         }
         help_texts = {
-            "valor_total": "Informe o valor completo. As parcelas serão calculadas automaticamente.",
+            "valor_total": "Informe o valor completo, maior que zero. As parcelas serão calculadas automaticamente.",
             "primeiro_vencimento": "As próximas parcelas vencerão mensalmente, no mesmo dia quando possível.",
             "quantidade_parcelas": "Use 1 para pagamento único. Máximo de 120 parcelas.",
         }
+
+    def clean_valor_total(self):
+        valor = self.cleaned_data.get("valor_total")
+        if valor is not None and valor <= 0:
+            raise forms.ValidationError("O valor do lançamento deve ser maior que zero.")
+        return valor
 
 
 class OrcamentoForm(forms.ModelForm):
