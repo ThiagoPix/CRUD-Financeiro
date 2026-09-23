@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.functions import Round
 from django.utils import timezone
 
 
@@ -100,7 +101,7 @@ class Lancamento(models.Model):
                 name="lancamento_vencimento_valido",
             ),
             models.CheckConstraint(
-                condition=models.Q(valor_total__gte=models.F("quantidade_parcelas") * Decimal("0.01")),
+                condition=models.Q(valor_total__gte=Round(models.F("quantidade_parcelas") * Decimal("0.01"), precision=2)),
                 name="lancamento_minimo_por_parcela",
             ),
         ]

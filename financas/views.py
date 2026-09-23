@@ -202,7 +202,6 @@ def parcela_editar(request, pk):
     parcela = get_object_or_404(Parcela.objects.select_related("lancamento"), pk=pk)
     if request.method == "POST":
         with transaction.atomic():
-            get_object_or_404(Lancamento.objects.select_for_update(), pk=parcela.lancamento_id)
             parcela = get_object_or_404(Parcela.objects.select_related("lancamento"), pk=pk)
             form = ParcelaForm(request.POST, instance=parcela)
             if form.is_valid():

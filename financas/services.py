@@ -4,7 +4,6 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Sum
 
 from .models import Categoria, Lancamento, Parcela
 
@@ -22,7 +21,7 @@ def salvar_lancamento(form):
     lancamento = form.save(commit=False)
     anterior = None
     if lancamento.pk:
-        anterior = Lancamento.objects.select_for_update().get(pk=lancamento.pk)
+        anterior = Lancamento.objects.get(pk=lancamento.pk)
     lancamento.full_clean()
     regenerar = anterior is None or any(
         getattr(anterior, campo) != getattr(lancamento, campo)
@@ -48,19 +47,20 @@ def salvar_lancamento(form):
 
 @transaction.atomic
 def excluir_lancamento(instance):
-    lancamento = Lancamento.objects.select_for_update().get(pk=instance.pk)
+    lancamento = Lancamento.objects.get(pk=instance.pk)
     if lancamento.parcelas.filter(paga=True).exists():
         raise ValidationError("Este lançamento possui parcelas pagas. Desmarque os pagamentos antes de excluí-lo.")
     return lancamento.delete()
 
 
 def totais_orcamento(orcamento):
-    comprometido = Parcela.objects.filter(
+    valores = Parcela.objects.filter(
         lancamento__categoria_id=orcamento.categoria_id,
         lancamento__categoria__tipo=Categoria.Tipo.DESPESA,
         vencimento__month=orcamento.mes,
         vencimento__year=orcamento.ano,
-    ).aggregate(total=Sum("valor", default=Decimal("0.00")))["total"]
+    ).values_list("valor", flat=True)
+    comprometido = sum(valores, Decimal("0.00"))
     disponivel = orcamento.limite - comprometido
     percentual = (comprometido / orcamento.limite * 100).quantize(Decimal("0.01"))
     return {
