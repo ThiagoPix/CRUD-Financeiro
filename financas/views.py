@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -131,10 +132,12 @@ def lancamento_lista(request):
     filtro = FiltroLancamentoForm({"q": busca, "categoria": categoria})
     lancamentos = Lancamento.objects.select_related("conta", "categoria")
     if filtro.is_valid():
+        criterios = Q()
         if filtro.cleaned_data["q"]:
-            lancamentos = lancamentos.filter(descricao__icontains=filtro.cleaned_data["q"])
+            criterios &= Q(descricao__icontains=filtro.cleaned_data["q"])
         if filtro.cleaned_data["categoria"]:
-            lancamentos = lancamentos.filter(categoria=filtro.cleaned_data["categoria"])
+            criterios &= Q(categoria=filtro.cleaned_data["categoria"])
+        lancamentos = lancamentos.filter(criterios)
     else:
         lancamentos = lancamentos.none()
     linhas = [{
