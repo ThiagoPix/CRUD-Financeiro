@@ -83,6 +83,21 @@ class ParcelaForm(forms.ModelForm):
         widgets = {"vencimento": DataInput()}
 
 
+class FiltroLancamentoForm(forms.Form):
+    q = forms.CharField(
+        label="Buscar por descrição",
+        required=False,
+        max_length=200,
+        widget=forms.SearchInput(attrs={"placeholder": "Ex.: mercado, aluguel..."}),
+    )
+    categoria = forms.ModelChoiceField(
+        label="Categoria",
+        queryset=Categoria.objects.all(),
+        required=False,
+        empty_label="Todas as categorias",
+    )
+
+
 class FiltroMesForm(forms.Form):
     mes = forms.TypedChoiceField(label="Mês", choices=MESES, coerce=int)
     ano = forms.IntegerField(label="Ano", min_value=1900, max_value=9999)

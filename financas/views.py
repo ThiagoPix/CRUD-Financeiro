@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
-from .forms import CategoriaForm, ContaForm, FiltroMesForm, LancamentoForm, OrcamentoForm, ParcelaForm
+from .forms import CategoriaForm, ContaForm, FiltroLancamentoForm, FiltroMesForm, LancamentoForm, OrcamentoForm, ParcelaForm
 from .models import Categoria, Conta, Lancamento, Orcamento, Parcela
 from .services import excluir_lancamento, salvar_lancamento, totais_orcamento
 from .templatetags.financas_tags import dinheiro
@@ -126,7 +126,17 @@ def categoria_excluir(request, pk):
 
 @require_GET
 def lancamento_lista(request):
+    busca = request.GET.get("q", "")
+    categoria = request.GET.get("categoria", "")
+    filtro = FiltroLancamentoForm({"q": busca, "categoria": categoria})
     lancamentos = Lancamento.objects.select_related("conta", "categoria")
+    if filtro.is_valid():
+        if filtro.cleaned_data["q"]:
+            lancamentos = lancamentos.filter(descricao__icontains=filtro.cleaned_data["q"])
+        if filtro.cleaned_data["categoria"]:
+            lancamentos = lancamentos.filter(categoria=filtro.cleaned_data["categoria"])
+    else:
+        lancamentos = lancamentos.none()
     linhas = [{
         "celulas": [item.descricao, item.get_tipo_display(), item.conta.nome, item.categoria.nome, dinheiro(item.valor_total), item.data.strftime("%d/%m/%Y"), str(item.quantidade_parcelas)],
         "detalhe_url": reverse("financas:lancamento_detalhe", args=[item.pk]),
@@ -136,6 +146,7 @@ def lancamento_lista(request):
         "titulo": "Lançamentos", "subtitulo": "Entradas, saídas e o que ficou para o próximo mês.",
         "secao": "lancamentos", "colunas": ["Descrição", "Tipo", "Conta", "Categoria", "Valor total", "Data", "Parcelas"],
         "linhas": linhas, "criar_url": reverse("financas:lancamento_criar"),
+        "filtro": filtro, "filtros_ativos": bool(busca.strip() or categoria.strip()),
         "vazio": "Comece cadastrando uma conta e uma categoria. Depois, registre seu primeiro lançamento.",
     })
 

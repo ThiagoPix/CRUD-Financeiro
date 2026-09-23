@@ -11,10 +11,10 @@
 
 {% if filtro %}
 <section class="painel painel-filtros" aria-labelledby="titulo-filtros">
-    <h2 id="titulo-filtros" class="titulo-pequeno">Filtrar registros</h2>
-    <form method="get" class="formulario-filtros">
+    <h2 id="titulo-filtros" class="titulo-pequeno">{% if secao == 'lancamentos' %}Buscar lançamentos{% else %}Filtrar registros{% endif %}</h2>
+    <form method="get" class="formulario-filtros{% if secao == 'lancamentos' %} filtros-lancamentos{% endif %}">
         {% for field in filtro %}
-            <div class="campo">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<p class="erro-campo">{{ error }}</p>{% endfor %}</div>
+            <div class="campo{% if field.name == 'q' %} campo-busca{% endif %}{% if field.errors %} campo-com-erro{% endif %}">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<p class="erro-campo">{{ error }}</p>{% endfor %}</div>
         {% endfor %}
         <div class="acoes-filtro"><button class="botao botao-primario" type="submit">Filtrar</button><a class="link-discreto" href="?">Limpar</a></div>
         {% if filtro.non_field_errors %}<div class="erros-formulario">{{ filtro.non_field_errors }}</div>{% endif %}
@@ -46,6 +46,17 @@
             </table>
         </div>
         <p class="nota-rolagem">Deslize a tabela para ver todas as colunas.</p>
+    {% elif filtro.errors %}
+        <div class="estado-vazio">
+            <h2>Revise os filtros</h2>
+            <p>Corrija os campos indicados acima para consultar os lançamentos.</p>
+        </div>
+    {% elif filtros_ativos %}
+        <div class="estado-vazio">
+            <h2>Nenhum lançamento encontrado</h2>
+            <p>Tente outra descrição ou categoria para encontrar o que procura.</p>
+            <a class="link-acao" href="{% url 'financas:lancamento_lista' %}">Limpar filtros</a>
+        </div>
     {% else %}
         <div class="estado-vazio estado-vazio-lista">
             <div class="vazio-abertura">

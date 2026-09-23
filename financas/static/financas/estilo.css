@@ -177,6 +177,9 @@ tbody th { font-weight: 400; }
 .formulario-filtros .campo label { font-family: var(--mono); font-size: .65rem; margin-bottom: 7px; color: var(--suave); }
 .formulario-filtros .acoes-filtro { display: flex; align-items: center; gap: 20px; padding-top: 23px; }
 .formulario-filtros .erros-formulario { flex-basis: 100%; }
+.filtros-lancamentos { flex: 1; min-width: 0; }
+.filtros-lancamentos .campo { flex: 1 1 200px; width: auto; }
+.filtros-lancamentos .campo-busca { flex: 2 1 260px; }
 .link-discreto { color: var(--suave); font-size: .75rem; }
 .orcamentos-grade { border-top: 1px solid var(--acento); }
 .cartao-orcamento { display: grid; grid-template-columns: minmax(210px, 1.4fr) minmax(150px, 1fr) minmax(270px, 1.7fr) auto; align-items: center; gap: 28px; padding: 33px 0; border-bottom: 1px solid var(--borda); }
@@ -237,6 +240,7 @@ tbody th { font-weight: 400; }
     .orcamento-valores { grid-column: 1 / -1; }
     .orcamento-acoes { justify-content: flex-start; }
     .painel-filtros { align-items: flex-start; flex-direction: column; gap: 19px; }
+    .filtros-lancamentos { width: 100%; }
 }
 
 @media (max-width: 480px) {
@@ -267,6 +271,7 @@ tbody th { font-weight: 400; }
     .formulario-rodape > .botao { flex: 1 1 auto; }
     .formulario-filtros { width: 100%; gap: 17px; }
     .formulario-filtros .campo { flex: 1 1 110px; width: auto; }
+    .filtros-lancamentos .campo-busca { flex-basis: 100%; }
     .formulario-filtros .acoes-filtro { width: 100%; padding-top: 0; }
     .cartao-orcamento { gap: 25px 16px; }
     .orcamento-limite strong { font-size: 1.5rem; }
