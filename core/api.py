@@ -36,3 +36,14 @@ class OrganizacaoMixin:
 
     def perform_create(self, serializer):
         serializer.save(organizacao=self.request.user.perfil.organizacao)
+
+
+class AdminExcluiOperadorEscreve(TemPerfil):
+    """Qualquer perfil lê, cria e altera; só o administrador exclui."""
+
+    message = "Somente o administrador pode excluir este recurso."
+
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        return request.method != "DELETE" or request.user.perfil.eh_admin

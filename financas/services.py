@@ -18,7 +18,11 @@ def vencimento_mensal(primeiro_vencimento, deslocamento):
 
 @transaction.atomic
 def salvar_lancamento(form):
-    lancamento = form.save(commit=False)
+    return gravar_lancamento(form.save(commit=False))
+
+
+@transaction.atomic
+def gravar_lancamento(lancamento):
     anterior = None
     if lancamento.pk:
         anterior = Lancamento.objects.get(pk=lancamento.pk)
