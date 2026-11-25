@@ -6,8 +6,10 @@ from django.db import models
 from django.db.models.functions import Round
 from django.utils import timezone
 
+from core.models import DaOrganizacao
 
-class Conta(models.Model):
+
+class Conta(DaOrganizacao):
     class Tipo(models.TextChoices):
         CARTEIRA = "carteira", "Carteira"
         CORRENTE = "corrente", "Conta corrente"
@@ -31,7 +33,7 @@ class Conta(models.Model):
         return self.nome
 
 
-class Categoria(models.Model):
+class Categoria(DaOrganizacao):
     class Tipo(models.TextChoices):
         RECEITA = "receita", "Receita"
         DESPESA = "despesa", "Despesa"
@@ -66,7 +68,7 @@ class Categoria(models.Model):
                     )
 
 
-class Lancamento(models.Model):
+class Lancamento(DaOrganizacao):
     descricao = models.CharField("descrição", max_length=200)
     conta = models.ForeignKey(
         Conta, on_delete=models.PROTECT, related_name="lancamentos", verbose_name="conta"
@@ -145,7 +147,7 @@ class Lancamento(models.Model):
             raise ValidationError(erros)
 
 
-class Orcamento(models.Model):
+class Orcamento(DaOrganizacao):
     categoria = models.ForeignKey(
         Categoria,
         on_delete=models.PROTECT,

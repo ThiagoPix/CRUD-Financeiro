@@ -29,3 +29,12 @@ class Perfil(models.Model):
 
     def __str__(self):
         return f"{self.usuario} — {self.organizacao}"
+
+
+class DaOrganizacao(models.Model):
+    organizacao = models.ForeignKey(
+        Organizacao, on_delete=models.PROTECT, null=True, blank=True, verbose_name="organização"
+    )
+
+    class Meta:
+        abstract = True
