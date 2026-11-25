@@ -110,12 +110,12 @@ class DashboardTest(TestCase):
         self.assertContains(resposta, "Sem despesas no período.")
 
     def test_numero_de_consultas_nao_cresce_com_os_dados(self):
-        # 4 de sessão/usuário/perfil/organização + 8 métricas (fluxo, 2 rankings, por conta, série, saldos, 2 de orçamento); não depende da quantidade de lançamentos
-        with self.assertNumQueries(12):
+        # 4 de sessão/usuário/perfil/organização + 8 métricas (fluxo, 2 rankings, por conta, série, saldos, 2 de orçamento) + 1 da equipe (só administrador); não depende da quantidade de lançamentos
+        with self.assertNumQueries(13):
             self.client.get(reverse("financas:dashboard"))
         for _ in range(20):
             lancar(self.a, "despesa", "10.00", date(2026, 4, 1))
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(13):
             self.client.get(reverse("financas:dashboard"))
 
     def test_operador_nao_ve_serie_nem_grafico(self):

@@ -289,7 +289,7 @@ tbody th { font-weight: 400; }
 
 /* Dashboard */
 body.secao-dashboard { --acento: #b9c79a; }
-.cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin-bottom: 38px; }
+.cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 38px; }
 .cartao { border: 1px solid var(--borda); background: var(--superficie); padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; }
 .cartao small { font-family: var(--mono); font-size: .66rem; color: var(--suave); }
 .cartao strong { font-family: var(--serif); font-weight: 400; font-size: 1.7rem; letter-spacing: -.02em; overflow-wrap: anywhere; }
@@ -300,3 +300,6 @@ body.secao-dashboard { --acento: #b9c79a; }
 .grafico-baixo { height: 240px; }
 .texto-alerta { color: var(--perigo); }
 .grade-dashboard .painel { margin-bottom: 8px; }
+
+.cartao small { overflow-wrap: anywhere; }
+.cartao strong { font-size: 1.5rem; }

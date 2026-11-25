@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
+from core.models import Perfil
 from core.organizacao import org_atual
 from core.permissoes import papel_requerido
 
@@ -255,6 +256,10 @@ def parcela_editar(request, pk):
     })
 
 
+def equipe_da_organizacao(organizacao):
+    return list(Perfil.objects.filter(organizacao=organizacao).select_related("usuario").order_by("usuario__username"))
+
+
 @require_GET
 def dashboard(request):
     org = org_atual(request)
@@ -266,4 +271,5 @@ def dashboard(request):
     return render(request, "financas/dashboard.html", {
         "titulo": "Dashboard", "secao": "dashboard", "form": form, "periodo_filtrado": bool(inicio or fim),
         "graficos": dados_dos_graficos(dados, request.user.perfil.eh_admin), **dados,
+        "equipe": equipe_da_organizacao(org) if request.user.perfil.eh_admin else None,
     })

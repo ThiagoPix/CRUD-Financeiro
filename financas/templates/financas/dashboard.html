@@ -156,6 +156,25 @@
     </div>
 </section>
 
+{% if equipe %}
+<section class="painel painel-registros" aria-labelledby="titulo-equipe">
+    <div class="painel-cabecalho">
+        <h2 id="titulo-equipe" class="titulo-pequeno">Equipe</h2>
+        <a class="link-acao" href="{% url 'core:equipe_lista' %}">Gerenciar equipe</a>
+    </div>
+    <div class="tabela-rolagem" role="region" aria-label="Membros da equipe" tabindex="0">
+        <table>
+            <thead><tr><th scope="col">Usuário</th><th scope="col">Papel</th></tr></thead>
+            <tbody>
+                {% for perfil in equipe %}
+                    <tr><td>{{ perfil.usuario.username }}</td><td>{{ perfil.get_papel_display }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
 {{ graficos|json_script:"dados-graficos" }}
 {% endblock %}
 
