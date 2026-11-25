@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-from .forms import CategoriaForm, ContaForm, OrcamentoForm
 from .models import Categoria, Conta, Lancamento, Orcamento, Parcela
 
 
@@ -10,25 +9,22 @@ class SemExclusaoEmLoteAdmin(admin.ModelAdmin):
 
 @admin.register(Conta)
 class ContaAdmin(SemExclusaoEmLoteAdmin):
-    form = ContaForm
-    list_display = ("nome", "tipo")
+    list_display = ("nome", "tipo", "organizacao")
     search_fields = ("nome",)
-    list_filter = ("tipo",)
+    list_filter = ("organizacao", "tipo")
 
 
 @admin.register(Categoria)
 class CategoriaAdmin(SemExclusaoEmLoteAdmin):
-    form = CategoriaForm
-    list_display = ("nome", "tipo")
+    list_display = ("nome", "tipo", "organizacao")
     search_fields = ("nome",)
-    list_filter = ("tipo",)
+    list_filter = ("organizacao", "tipo")
 
 
 @admin.register(Orcamento)
 class OrcamentoAdmin(SemExclusaoEmLoteAdmin):
-    form = OrcamentoForm
-    list_display = ("categoria", "mes", "ano", "limite")
-    list_filter = ("ano", "mes", "categoria")
+    list_display = ("categoria", "mes", "ano", "limite", "organizacao")
+    list_filter = ("organizacao", "ano", "mes", "categoria")
 
 
 class ConsultaAdmin(admin.ModelAdmin):
@@ -46,8 +42,8 @@ class ConsultaAdmin(admin.ModelAdmin):
 
 @admin.register(Lancamento)
 class LancamentoAdmin(ConsultaAdmin):
-    list_display = ("descricao", "conta", "categoria", "valor_total", "data", "quantidade_parcelas")
-    list_filter = ("categoria__tipo", "conta", "categoria")
+    list_display = ("descricao", "organizacao", "conta", "categoria", "valor_total", "data", "quantidade_parcelas")
+    list_filter = ("organizacao", "categoria__tipo", "conta", "categoria")
     search_fields = ("descricao",)
 
 

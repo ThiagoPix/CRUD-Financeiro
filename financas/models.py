@@ -15,7 +15,7 @@ class Conta(DaOrganizacao):
         CORRENTE = "corrente", "Conta corrente"
         POUPANCA = "poupanca", "Poupança"
 
-    nome = models.CharField("nome", max_length=100, unique=True)
+    nome = models.CharField("nome", max_length=100)
     tipo = models.CharField("tipo", max_length=10, choices=Tipo.choices)
 
     class Meta:
@@ -23,6 +23,7 @@ class Conta(DaOrganizacao):
         verbose_name = "conta"
         verbose_name_plural = "contas"
         constraints = [
+            models.UniqueConstraint(fields=["organizacao", "nome"], name="conta_nome_unico_por_org"),
             models.CheckConstraint(
                 condition=models.Q(tipo__in=["carteira", "corrente", "poupanca"]),
                 name="conta_tipo_valido",
@@ -38,7 +39,7 @@ class Categoria(DaOrganizacao):
         RECEITA = "receita", "Receita"
         DESPESA = "despesa", "Despesa"
 
-    nome = models.CharField("nome", max_length=100, unique=True)
+    nome = models.CharField("nome", max_length=100)
     tipo = models.CharField("tipo", max_length=7, choices=Tipo.choices)
 
     class Meta:
@@ -46,6 +47,7 @@ class Categoria(DaOrganizacao):
         verbose_name = "categoria"
         verbose_name_plural = "categorias"
         constraints = [
+            models.UniqueConstraint(fields=["organizacao", "nome"], name="categoria_nome_unico_por_org"),
             models.CheckConstraint(
                 condition=models.Q(tipo__in=["receita", "despesa"]),
                 name="categoria_tipo_valido",
@@ -166,7 +168,7 @@ class Orcamento(DaOrganizacao):
         verbose_name = "orçamento"
         verbose_name_plural = "orçamentos"
         constraints = [
-            models.UniqueConstraint(fields=["categoria", "mes", "ano"], name="orcamento_categoria_mes_ano_unico"),
+            models.UniqueConstraint(fields=["organizacao", "categoria", "mes", "ano"], name="orcamento_categoria_mes_ano_unico"),
             models.CheckConstraint(condition=models.Q(mes__gte=1, mes__lte=12), name="orcamento_mes_valido"),
             models.CheckConstraint(condition=models.Q(ano__gte=1900, ano__lte=9999), name="orcamento_ano_valido"),
             models.CheckConstraint(condition=models.Q(limite__gt=0), name="orcamento_limite_positivo"),

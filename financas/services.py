@@ -55,6 +55,7 @@ def excluir_lancamento(instance):
 
 def totais_orcamento(orcamento):
     valores = Parcela.objects.filter(
+        lancamento__organizacao_id=orcamento.organizacao_id,
         lancamento__categoria_id=orcamento.categoria_id,
         lancamento__categoria__tipo=Categoria.Tipo.DESPESA,
         vencimento__month=orcamento.mes,

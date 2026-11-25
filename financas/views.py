@@ -10,10 +10,17 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
+from core.organizacao import org_atual
+
 from .forms import CategoriaForm, ContaForm, FiltroLancamentoForm, FiltroMesForm, LancamentoForm, OrcamentoForm, ParcelaForm
 from .models import Categoria, Conta, Lancamento, Orcamento, Parcela
 from .services import excluir_lancamento, salvar_lancamento, totais_orcamento
 from .templatetags.financas_tags import dinheiro
+
+
+def da_organizacao(request, consulta, **filtros):
+    # get_object_or_404 sempre restrito a organizacao do usuario
+    return get_object_or_404(consulta, organizacao=org_atual(request), **filtros)
 
 
 def acoes(objeto, nome):
@@ -24,7 +31,7 @@ def acoes(objeto, nome):
 
 
 def formulario(request, classe_form, titulo, secao, voltar_url, instance=None, salvar=None, subtitulo=""):
-    form = classe_form(request.POST if request.method == "POST" else None, instance=instance)
+    form = classe_form(request.POST if request.method == "POST" else None, instance=instance, org=org_atual(request))
     if request.method == "POST" and form.is_valid():
         try:
             with transaction.atomic():
@@ -77,7 +84,7 @@ def inicio(request):
 
 @require_GET
 def conta_lista(request):
-    linhas = [{"celulas": [conta.nome, conta.get_tipo_display()], **acoes(conta, "conta")} for conta in Conta.objects.all()]
+    linhas = [{"celulas": [conta.nome, conta.get_tipo_display()], **acoes(conta, "conta")} for conta in Conta.objects.filter(organizacao=org_atual(request))]
     return render(request, "financas/lista.html", {
         "titulo": "Contas", "subtitulo": "Carteira, conta corrente, poupança. Cada uma no seu lugar.",
         "secao": "contas", "colunas": ["Nome", "Tipo"], "linhas": linhas,
@@ -92,17 +99,17 @@ def conta_criar(request):
 
 @require_http_methods(["GET", "POST"])
 def conta_editar(request, pk):
-    return formulario(request, ContaForm, "Editar conta", "contas", reverse("financas:conta_lista"), get_object_or_404(Conta, pk=pk))
+    return formulario(request, ContaForm, "Editar conta", "contas", reverse("financas:conta_lista"), da_organizacao(request, Conta, pk=pk))
 
 
 @require_http_methods(["GET", "POST"])
 def conta_excluir(request, pk):
-    return confirmar_exclusao(request, get_object_or_404(Conta, pk=pk), "Excluir conta", "contas", reverse("financas:conta_lista"))
+    return confirmar_exclusao(request, da_organizacao(request, Conta, pk=pk), "Excluir conta", "contas", reverse("financas:conta_lista"))
 
 
 @require_GET
 def categoria_lista(request):
-    linhas = [{"celulas": [categoria.nome, categoria.get_tipo_display()], **acoes(categoria, "categoria")} for categoria in Categoria.objects.all()]
+    linhas = [{"celulas": [categoria.nome, categoria.get_tipo_display()], **acoes(categoria, "categoria")} for categoria in Categoria.objects.filter(organizacao=org_atual(request))]
     return render(request, "financas/lista.html", {
         "titulo": "Categorias", "subtitulo": "Os nomes que fazem sentido para o seu dia a dia.",
         "secao": "categorias", "colunas": ["Nome", "Tipo"], "linhas": linhas,
@@ -117,20 +124,21 @@ def categoria_criar(request):
 
 @require_http_methods(["GET", "POST"])
 def categoria_editar(request, pk):
-    return formulario(request, CategoriaForm, "Editar categoria", "categorias", reverse("financas:categoria_lista"), get_object_or_404(Categoria, pk=pk))
+    return formulario(request, CategoriaForm, "Editar categoria", "categorias", reverse("financas:categoria_lista"), da_organizacao(request, Categoria, pk=pk))
 
 
 @require_http_methods(["GET", "POST"])
 def categoria_excluir(request, pk):
-    return confirmar_exclusao(request, get_object_or_404(Categoria, pk=pk), "Excluir categoria", "categorias", reverse("financas:categoria_lista"))
+    return confirmar_exclusao(request, da_organizacao(request, Categoria, pk=pk), "Excluir categoria", "categorias", reverse("financas:categoria_lista"))
 
 
 @require_GET
 def lancamento_lista(request):
     busca = request.GET.get("q", "")
     categoria = request.GET.get("categoria", "")
-    filtro = FiltroLancamentoForm({"q": busca, "categoria": categoria})
-    lancamentos = Lancamento.objects.select_related("conta", "categoria")
+    org = org_atual(request)
+    filtro = FiltroLancamentoForm({"q": busca, "categoria": categoria}, org=org)
+    lancamentos = Lancamento.objects.filter(organizacao=org).select_related("conta", "categoria")
     if filtro.is_valid():
         criterios = Q()
         if filtro.cleaned_data["q"]:
@@ -161,12 +169,12 @@ def lancamento_criar(request):
 
 @require_http_methods(["GET", "POST"])
 def lancamento_editar(request, pk):
-    return formulario(request, LancamentoForm, "Editar lançamento", "lancamentos", reverse("financas:lancamento_detalhe", args=[pk]), get_object_or_404(Lancamento, pk=pk), salvar_lancamento, "Alterar o valor, a quantidade ou o primeiro vencimento recalcula todas as parcelas pendentes e seus vencimentos.")
+    return formulario(request, LancamentoForm, "Editar lançamento", "lancamentos", reverse("financas:lancamento_detalhe", args=[pk]), da_organizacao(request, Lancamento, pk=pk), salvar_lancamento, "Alterar o valor, a quantidade ou o primeiro vencimento recalcula todas as parcelas pendentes e seus vencimentos.")
 
 
 @require_GET
 def lancamento_detalhe(request, pk):
-    lancamento = get_object_or_404(Lancamento.objects.select_related("conta", "categoria"), pk=pk)
+    lancamento = da_organizacao(request, Lancamento.objects.select_related("conta", "categoria"), pk=pk)
     parcelas = list(lancamento.parcelas.all())
     total_pago = sum((parcela.valor for parcela in parcelas if parcela.paga), Decimal("0.00"))
     total_pendente = sum((parcela.valor for parcela in parcelas if not parcela.paga), Decimal("0.00"))
@@ -178,7 +186,7 @@ def lancamento_detalhe(request, pk):
 
 @require_http_methods(["GET", "POST"])
 def lancamento_excluir(request, pk):
-    return confirmar_exclusao(request, get_object_or_404(Lancamento, pk=pk), "Excluir lançamento", "lancamentos", reverse("financas:lancamento_lista"), excluir_lancamento, "Todas as parcelas deste lançamento também serão excluídas. Lançamentos com parcelas pagas precisam ter os pagamentos desmarcados primeiro.")
+    return confirmar_exclusao(request, da_organizacao(request, Lancamento, pk=pk), "Excluir lançamento", "lancamentos", reverse("financas:lancamento_lista"), excluir_lancamento, "Todas as parcelas deste lançamento também serão excluídas. Lançamentos com parcelas pagas precisam ter os pagamentos desmarcados primeiro.")
 
 
 @require_GET
@@ -187,7 +195,7 @@ def orcamento_lista(request):
     filtro = FiltroMesForm(request.GET if request.GET else {"mes": hoje.month, "ano": hoje.year})
     resumos = []
     if filtro.is_valid():
-        orcamentos = Orcamento.objects.select_related("categoria").filter(**filtro.cleaned_data)
+        orcamentos = Orcamento.objects.select_related("categoria").filter(organizacao=org_atual(request), **filtro.cleaned_data)
         resumos = [{"orcamento": orcamento, **totais_orcamento(orcamento)} for orcamento in orcamentos]
     return render(request, "financas/orcamentos.html", {
         "titulo": "Orçamentos", "secao": "orcamentos", "filtro": filtro, "resumos": resumos,
@@ -201,22 +209,22 @@ def orcamento_criar(request):
 
 @require_http_methods(["GET", "POST"])
 def orcamento_editar(request, pk):
-    return formulario(request, OrcamentoForm, "Editar orçamento", "orcamentos", reverse("financas:orcamento_lista"), get_object_or_404(Orcamento, pk=pk))
+    return formulario(request, OrcamentoForm, "Editar orçamento", "orcamentos", reverse("financas:orcamento_lista"), da_organizacao(request, Orcamento, pk=pk))
 
 
 @require_http_methods(["GET", "POST"])
 def orcamento_excluir(request, pk):
-    orcamento = get_object_or_404(Orcamento, pk=pk)
+    orcamento = da_organizacao(request, Orcamento, pk=pk)
     voltar_url = f"{reverse('financas:orcamento_lista')}?mes={orcamento.mes}&ano={orcamento.ano}"
     return confirmar_exclusao(request, orcamento, "Excluir orçamento", "orcamentos", voltar_url, detalhe="Os lançamentos e suas parcelas serão preservados.")
 
 
 @require_http_methods(["GET", "POST"])
 def parcela_editar(request, pk):
-    parcela = get_object_or_404(Parcela.objects.select_related("lancamento"), pk=pk)
+    parcela = get_object_or_404(Parcela.objects.select_related("lancamento"), pk=pk, lancamento__organizacao=org_atual(request))
     if request.method == "POST":
         with transaction.atomic():
-            parcela = get_object_or_404(Parcela.objects.select_related("lancamento"), pk=pk)
+            parcela = get_object_or_404(Parcela.objects.select_related("lancamento"), pk=pk, lancamento__organizacao=org_atual(request))
             form = ParcelaForm(request.POST, instance=parcela)
             if form.is_valid():
                 form.save()

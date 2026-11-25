@@ -1,0 +1,10 @@
+{% extends 'financas/base.html' %}
+
+{% block content %}
+<header class="cabecalho-pagina">
+    <div>
+        <h1>Acesso negado</h1>
+        <p class="subtitulo">{% if exception %}{{ exception }}{% else %}Você não tem permissão para acessar esta página.{% endif %}</p>
+    </div>
+</header>
+{% endblock %}

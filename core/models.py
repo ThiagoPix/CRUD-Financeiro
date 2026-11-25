@@ -33,7 +33,7 @@ class Perfil(models.Model):
 
 class DaOrganizacao(models.Model):
     organizacao = models.ForeignKey(
-        Organizacao, on_delete=models.PROTECT, null=True, blank=True, verbose_name="organização"
+        Organizacao, on_delete=models.PROTECT, verbose_name="organização"
     )
 
     class Meta:

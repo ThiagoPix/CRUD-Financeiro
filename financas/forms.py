@@ -27,19 +27,40 @@ class DataInput(forms.DateInput):
         super().__init__(attrs=attrs, format="%Y-%m-%d")
 
 
-class ContaForm(forms.ModelForm):
+class FormDaOrganizacao(forms.ModelForm):
+    """A organização vem do usuário logado, nunca do formulário."""
+
+    def __init__(self, *args, org, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.org = org
+        self.instance.organizacao = org
+
+    def validar_nome_unico(self, nome):
+        modelo = self._meta.model
+        if nome and modelo.objects.filter(organizacao=self.org, nome=nome).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Já existe um registro com este nome na sua organização.")
+        return nome
+
+
+class ContaForm(FormDaOrganizacao):
     class Meta:
         model = Conta
         fields = ["nome", "tipo"]
 
+    def clean_nome(self):
+        return self.validar_nome_unico(self.cleaned_data.get("nome"))
 
-class CategoriaForm(forms.ModelForm):
+
+class CategoriaForm(FormDaOrganizacao):
     class Meta:
         model = Categoria
         fields = ["nome", "tipo"]
 
+    def clean_nome(self):
+        return self.validar_nome_unico(self.cleaned_data.get("nome"))
 
-class LancamentoForm(forms.ModelForm):
+
+class LancamentoForm(FormDaOrganizacao):
     class Meta:
         model = Lancamento
         fields = ["descricao", "conta", "categoria", "valor_total", "data", "primeiro_vencimento", "quantidade_parcelas"]
@@ -55,6 +76,11 @@ class LancamentoForm(forms.ModelForm):
             "quantidade_parcelas": "Use 1 para pagamento único. Máximo de 120 parcelas.",
         }
 
+    def __init__(self, *args, org, **kwargs):
+        super().__init__(*args, org=org, **kwargs)
+        self.fields["conta"].queryset = Conta.objects.filter(organizacao=org)
+        self.fields["categoria"].queryset = Categoria.objects.filter(organizacao=org)
+
     def clean_valor_total(self):
         valor = self.cleaned_data.get("valor_total")
         if valor is not None and valor <= 0:
@@ -62,7 +88,7 @@ class LancamentoForm(forms.ModelForm):
         return valor
 
 
-class OrcamentoForm(forms.ModelForm):
+class OrcamentoForm(FormDaOrganizacao):
     mes = forms.TypedChoiceField(label="Mês", choices=MESES, coerce=int)
 
     class Meta:
@@ -73,13 +99,22 @@ class OrcamentoForm(forms.ModelForm):
             "limite": forms.NumberInput(attrs={"min": "0.01", "step": "0.01"}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["categoria"].queryset = Categoria.objects.filter(tipo=Categoria.Tipo.DESPESA)
+    def __init__(self, *args, org, **kwargs):
+        super().__init__(*args, org=org, **kwargs)
+        self.fields["categoria"].queryset = Categoria.objects.filter(organizacao=org, tipo=Categoria.Tipo.DESPESA)
         if not self.instance.pk:
             hoje = timezone.localdate()
             self.initial.setdefault("mes", hoje.month)
             self.initial.setdefault("ano", hoje.year)
+
+    def clean(self):
+        dados = super().clean()
+        categoria, mes, ano = dados.get("categoria"), dados.get("mes"), dados.get("ano")
+        if categoria and mes and ano:
+            duplicado = Orcamento.objects.filter(organizacao=self.org, categoria=categoria, mes=mes, ano=ano)
+            if duplicado.exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError("Já existe um orçamento para esta categoria neste mês e ano.")
+        return dados
 
 
 class ParcelaForm(forms.ModelForm):
@@ -98,10 +133,14 @@ class FiltroLancamentoForm(forms.Form):
     )
     categoria = forms.ModelChoiceField(
         label="Categoria",
-        queryset=Categoria.objects.all(),
+        queryset=Categoria.objects.none(),
         required=False,
         empty_label="Todas as categorias",
     )
+
+    def __init__(self, *args, org, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["categoria"].queryset = Categoria.objects.filter(organizacao=org)
 
 
 class FiltroMesForm(forms.Form):
