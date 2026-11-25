@@ -19,13 +19,20 @@
                     <span class="marca-nome">Controle <em>financeiro</em></span>
                 </a>
                 <div class="data-caderno"><span>Hoje</span><time datetime="{% now 'Y-m-d' %}">{% now "d.m.Y" %}</time></div>
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" class="data-caderno">
+                    {% csrf_token %}
+                    <span>{{ user.get_username }}</span>
+                    <button class="botao botao-secundario" type="submit">Sair</button>
+                </form>
+                {% endif %}
             </div>
-            <nav class="navegacao" aria-label="Navegação principal">
+            {% if user.is_authenticated %}<nav class="navegacao" aria-label="Navegação principal">
                 <a href="{% url 'financas:lancamento_lista' %}" {% if secao == 'lancamentos' %}aria-current="page"{% endif %}>Lançamentos</a>
                 <a href="{% url 'financas:conta_lista' %}" {% if secao == 'contas' %}aria-current="page"{% endif %}>Contas</a>
                 <a href="{% url 'financas:categoria_lista' %}" {% if secao == 'categorias' %}aria-current="page"{% endif %}>Categorias</a>
                 <a href="{% url 'financas:orcamento_lista' %}" {% if secao == 'orcamentos' %}aria-current="page"{% endif %}>Orçamentos</a>
-            </nav>
+            </nav>{% endif %}
         </header>
         <main id="conteudo" class="conteudo" tabindex="-1">
             <nav class="caminho" aria-label="Você está aqui">

@@ -1,0 +1,37 @@
+{% extends 'financas/base.html' %}
+
+{% block content %}
+<header class="cabecalho-pagina">
+    <div>
+        <h1>Entrar</h1>
+        <p class="subtitulo">Acesse com o usuário da sua organização.</p>
+    </div>
+</header>
+
+<div class="pagina-formulario">
+<section class="painel painel-formulario" aria-labelledby="dados-acesso">
+    <div class="painel-cabecalho">
+        <h2 id="dados-acesso" class="titulo-pequeno">Dados de acesso</h2>
+    </div>
+    <form method="post" class="formulario">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% if form.non_field_errors %}
+            <div class="erros-formulario" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="campos-grade">
+            {% for field in form.visible_fields %}
+                <div class="campo campo-inteiro{% if field.errors %} campo-com-erro{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="erro-campo">{{ error }}</p>{% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="formulario-rodape">
+            <button class="botao botao-primario" type="submit">Entrar</button>
+        </div>
+    </form>
+</section>
+</div>
+{% endblock %}
