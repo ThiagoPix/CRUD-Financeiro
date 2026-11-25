@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_not_required
 from django.urls import path
 
-from . import api_views
+from . import api_dashboard, api_views
 
 urlpatterns = [
     path("contas/", login_not_required(api_views.ContaListCreate.as_view()), name="api_conta_lista"),
@@ -13,4 +13,5 @@ urlpatterns = [
     path("orcamentos/", login_not_required(api_views.OrcamentoListCreate.as_view()), name="api_orcamento_lista"),
     path("orcamentos/<int:pk>/", login_not_required(api_views.OrcamentoDetail.as_view()), name="api_orcamento_detalhe"),
     path("parcelas/<int:pk>/", login_not_required(api_views.ParcelaDetail.as_view()), name="api_parcela_detalhe"),
+    path("dashboard/", login_not_required(api_dashboard.DashboardApi.as_view()), name="api_dashboard"),
 ]

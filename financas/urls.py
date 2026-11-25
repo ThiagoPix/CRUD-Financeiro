@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import exportacao, views
 
 
 app_name = "financas"
@@ -8,6 +8,7 @@ app_name = "financas"
 urlpatterns = [
     path("", views.inicio, name="inicio"),
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("dashboard/exportar.csv", exportacao.exportar_lancamentos_csv, name="dashboard_exportar"),
     path("contas/", views.conta_lista, name="conta_lista"),
     path("contas/nova/", views.conta_criar, name="conta_criar"),
     path("contas/<int:pk>/editar/", views.conta_editar, name="conta_editar"),

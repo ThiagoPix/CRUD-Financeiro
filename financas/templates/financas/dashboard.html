@@ -70,7 +70,10 @@
 
 {% if user.perfil.eh_admin %}
 <section class="painel painel-registros" aria-labelledby="titulo-serie">
-    <div class="painel-cabecalho"><h2 id="titulo-serie" class="titulo-pequeno">Mês a mês</h2></div>
+    <div class="painel-cabecalho">
+        <h2 id="titulo-serie" class="titulo-pequeno">Mês a mês</h2>
+        <a class="link-acao" href="{% url 'financas:dashboard_exportar' %}?inicio={{ form.inicio.value|default:'' }}&fim={{ form.fim.value|default:'' }}">Exportar CSV</a>
+    </div>
     {% if serie_grafico %}
         <div class="grafico"><canvas id="grafico-mensal" role="img" aria-label="Gráfico de barras com receitas e despesas por mês. Os mesmos valores estão na tabela abaixo."></canvas></div>
         {{ serie_grafico|json_script:"dados-mensais" }}
