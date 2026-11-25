@@ -9,5 +9,6 @@ urlpatterns = [
     path("sair/", auth_views.LogoutView.as_view(), name="logout"),
     path("api/", include("financas.api_urls")),
     path("api-auth/", include("rest_framework.urls")),
+    path("", include("core.urls")),
     path("", include("financas.urls")),
 ]

@@ -1,0 +1,42 @@
+{% extends 'financas/base.html' %}
+
+{% block title %}Criar conta{% endblock %}
+{% block caminho %}Criar conta{% endblock %}
+
+{% block content %}
+<header class="cabecalho-pagina">
+    <div>
+        <h1>Criar conta</h1>
+        <p class="subtitulo">Cadastre a sua organização. Você será o administrador e poderá convidar a equipe depois.</p>
+    </div>
+    <a class="botao botao-secundario" href="{% url 'login' %}">Já tenho conta</a>
+</header>
+
+<div class="pagina-formulario">
+<section class="painel painel-formulario" aria-labelledby="dados-cadastro">
+    <div class="painel-cabecalho">
+        <h2 id="dados-cadastro" class="titulo-pequeno">Dados da organização</h2>
+    </div>
+    <form method="post" class="formulario">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="erros-formulario" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+        {% if form.errors %}<p class="aviso-validacao" role="alert">Revise os campos indicados.</p>{% endif %}
+        <div class="campos-grade">
+            {% for field in form.visible_fields %}
+                <div class="campo campo-inteiro{% if field.errors %} campo-com-erro{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<div class="ajuda-campo">{{ field.help_text }}</div>{% endif %}
+                    {% for error in field.errors %}<p class="erro-campo">{{ error }}</p>{% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="formulario-rodape">
+            <button class="botao botao-primario" type="submit">Criar organização</button>
+        </div>
+    </form>
+</section>
+</div>
+{% endblock %}
