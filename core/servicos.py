@@ -24,6 +24,17 @@ def _validar_usuario(usuario, senha):
     return novo
 
 
+def _validar_papel(papel):
+    if papel not in dict(Perfil.PAPEIS):
+        raise ValidationError({"papel": ["Papel inválido."]})
+
+
+def _e_o_ultimo_admin(perfil):
+    return not Perfil.objects.filter(
+        organizacao_id=perfil.organizacao_id, papel=Perfil.ADMIN
+    ).exclude(pk=perfil.pk).exists()
+
+
 @transaction.atomic
 def cadastrar_organizacao(nome_organizacao, usuario, senha):
     """Cria a organização e o seu primeiro usuário, já como administrador."""
@@ -44,3 +55,46 @@ def cadastrar_organizacao(nome_organizacao, usuario, senha):
     novo.set_password(senha)
     novo.save()
     return Perfil.objects.create(usuario=novo, organizacao=organizacao, papel=Perfil.ADMIN)
+
+
+@transaction.atomic
+def criar_membro(organizacao, usuario, senha, papel):
+    """Cria um usuário já vinculado à organização, com o papel escolhido."""
+    erros = {}
+    try:
+        _validar_papel(papel)
+    except ValidationError as erro:
+        erros.update(erro.message_dict)
+    novo = None
+    try:
+        novo = _validar_usuario(usuario, senha)
+    except ValidationError as erro:
+        erros.update(erro.message_dict)
+    if erros:
+        raise ValidationError(erros)
+    novo.set_password(senha)
+    novo.save()
+    return Perfil.objects.create(usuario=novo, organizacao=organizacao, papel=papel)
+
+
+@transaction.atomic
+def alterar_papel(perfil, papel):
+    _validar_papel(papel)
+    if perfil.usuario.is_superuser:
+        raise ValidationError("Superusuários só podem ser alterados pelo admin do Django.")
+    if perfil.papel == Perfil.ADMIN and papel != Perfil.ADMIN and _e_o_ultimo_admin(perfil):
+        raise ValidationError({"papel": ["A organização precisa de pelo menos um administrador."]})
+    perfil.papel = papel
+    perfil.save(update_fields=["papel"])
+    return perfil
+
+
+@transaction.atomic
+def remover_membro(perfil, removido_por):
+    if perfil.usuario_id == removido_por.pk:
+        raise ValidationError("Você não pode remover o seu próprio usuário.")
+    if perfil.usuario.is_superuser:
+        raise ValidationError("Superusuários só podem ser removidos pelo admin do Django.")
+    if perfil.papel == Perfil.ADMIN and _e_o_ultimo_admin(perfil):
+        raise ValidationError("A organização precisa de pelo menos um administrador.")
+    perfil.usuario.delete()

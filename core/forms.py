@@ -1,5 +1,7 @@
 from django import forms
 
+from .models import Perfil
+
 
 def adicionar_erros(form, erro):
     """Leva os erros de uma ValidationError das regras (servicos.py) para os campos do formulário."""
@@ -21,3 +23,13 @@ class CadastroForm(forms.Form):
         if dados.get("senha") and dados.get("confirmar_senha") and dados["senha"] != dados["confirmar_senha"]:
             self.add_error("confirmar_senha", "As senhas não conferem.")
         return dados
+
+
+class MembroForm(forms.Form):
+    usuario = forms.CharField(label="Usuário", max_length=150, help_text="Letras, números e @/./+/-/_ apenas.")
+    senha = forms.CharField(label="Senha inicial", widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}))
+    papel = forms.ChoiceField(label="Papel", choices=Perfil.PAPEIS, initial=Perfil.OPERADOR)
+
+
+class PapelForm(forms.Form):
+    papel = forms.ChoiceField(label="Papel", choices=Perfil.PAPEIS)

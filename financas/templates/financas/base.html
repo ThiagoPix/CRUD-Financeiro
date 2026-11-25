@@ -33,6 +33,7 @@
                 <a href="{% url 'financas:conta_lista' %}" {% if secao == 'contas' %}aria-current="page"{% endif %}>Contas</a>
                 <a href="{% url 'financas:categoria_lista' %}" {% if secao == 'categorias' %}aria-current="page"{% endif %}>Categorias</a>
                 <a href="{% url 'financas:orcamento_lista' %}" {% if secao == 'orcamentos' %}aria-current="page"{% endif %}>Orçamentos</a>
+                {% if user.perfil.eh_admin %}<a href="{% url 'core:equipe_lista' %}" {% if secao == 'equipe' %}aria-current="page"{% endif %}>Equipe</a>{% endif %}
             </nav>{% endif %}
         </header>
         <main id="conteudo" class="conteudo" tabindex="-1">

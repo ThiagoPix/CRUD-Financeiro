@@ -1,0 +1,39 @@
+{% extends 'financas/base.html' %}
+
+{% block title %}Equipe{% endblock %}
+{% block caminho %}Equipe{% endblock %}
+
+{% block content %}
+<header class="cabecalho-pagina cabecalho-lista">
+    <div>
+        <h1>Equipe<span class="ponto-titulo" aria-hidden="true">.</span></h1>
+        <p class="subtitulo">Quem tem acesso à {{ organizacao }} e o que cada um pode fazer.</p>
+    </div>
+    <a class="botao botao-primario" href="{% url 'core:equipe_criar' %}"><span aria-hidden="true">+</span> Novo membro</a>
+</header>
+
+<section class="painel painel-registros" aria-label="Membros da equipe">
+    <div class="painel-cabecalho">
+        <h2 class="titulo-pequeno">Membros</h2>
+        <span class="contador">{{ perfis|length|stringformat:"02d" }} <span>membro{{ perfis|length|pluralize }}</span></span>
+    </div>
+    <div class="tabela-rolagem" role="region" aria-label="Tabela da equipe" tabindex="0">
+        <table>
+            <thead><tr><th scope="col">Usuário</th><th scope="col">Papel</th><th scope="col" class="coluna-acoes">Ações</th></tr></thead>
+            <tbody>
+                {% for perfil in perfis %}
+                    <tr>
+                        <td>{{ perfil.usuario.username }}{% if perfil.usuario_id == user.pk %} <span class="texto-apoio">(você)</span>{% endif %}</td>
+                        <td>{{ perfil.get_papel_display }}</td>
+                        <td><div class="acoes-tabela">
+                            <a href="{% url 'core:equipe_editar' perfil.pk %}">Alterar papel<span class="apenas-leitor"> de {{ perfil.usuario.username }}</span></a>
+                            {% if perfil.usuario_id != user.pk %}<a href="{% url 'core:equipe_remover' perfil.pk %}" class="link-perigo">Remover<span class="apenas-leitor"> {{ perfil.usuario.username }}</span></a>{% endif %}
+                        </div></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="nota-criterio">Administrador faz tudo. Operador consulta tudo e lança e edita lançamentos e parcelas.</p>
+</section>
+{% endblock %}
