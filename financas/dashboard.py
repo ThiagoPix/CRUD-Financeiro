@@ -10,7 +10,7 @@ from decimal import Decimal
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import TruncMonth
 
-from .models import Categoria, Parcela
+from .models import Categoria, Conta, Parcela
 
 ZERO = Decimal("0.00")
 RECEITA = Q(lancamento__categoria__tipo=Categoria.Tipo.RECEITA)
@@ -96,6 +96,14 @@ def serie_mensal(parcelas):
     )
 
 
+def saldos_por_conta(organizacao):
+    """Saldo atual de cada conta (acumulado, não depende do período): saldo inicial + recebido - pago."""
+    return [
+        {"nome": conta.nome, "tipo": conta.get_tipo_display(), "saldo": conta.saldo_atual}
+        for conta in Conta.objects.filter(organizacao=organizacao).com_saldo()
+    ]
+
+
 def metricas(organizacao, inicio=None, fim=None):
     parcelas = parcelas_do_periodo(organizacao, inicio, fim)
     return {
@@ -103,4 +111,5 @@ def metricas(organizacao, inicio=None, fim=None):
         "ranking": ranking_despesas(parcelas),
         "por_conta": despesas_por_conta(parcelas),
         "serie": serie_mensal(parcelas),
+        "contas": saldos_por_conta(organizacao),
     }

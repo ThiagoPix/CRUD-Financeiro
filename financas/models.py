@@ -3,10 +3,29 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models.functions import Round
+from django.db.models import DecimalField, Q, Sum, Value
+from django.db.models.functions import Coalesce, Round
 from django.utils import timezone
 
 from core.models import DaOrganizacao
+
+
+ZERO = Decimal("0.00")
+
+
+class ContaQuerySet(models.QuerySet):
+    def com_saldo(self):
+        """Anota o que entrou e o que saiu de cada conta, contando só parcelas pagas (consulta única)."""
+        paga = Q(lancamentos__parcelas__paga=True)
+
+        def soma(tipo):
+            return Coalesce(
+                Sum("lancamentos__parcelas__valor", filter=paga & Q(lancamentos__categoria__tipo=tipo)),
+                Value(ZERO),
+                output_field=DecimalField(max_digits=14, decimal_places=2),
+            )
+
+        return self.annotate(entradas=soma("receita"), saidas=soma("despesa"))
 
 
 class Conta(DaOrganizacao):
@@ -17,6 +36,9 @@ class Conta(DaOrganizacao):
 
     nome = models.CharField("nome", max_length=100)
     tipo = models.CharField("tipo", max_length=10, choices=Tipo.choices)
+    saldo_inicial = models.DecimalField("saldo inicial", max_digits=12, decimal_places=2, default=ZERO, blank=True)
+
+    objects = ContaQuerySet.as_manager()
 
     class Meta:
         ordering = ["nome"]
@@ -32,6 +54,14 @@ class Conta(DaOrganizacao):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def saldo_atual(self):
+        """Saldo inicial + parcelas de receita pagas - parcelas de despesa pagas."""
+        if not hasattr(self, "entradas"):
+            resumo = Conta.objects.com_saldo().get(pk=self.pk)
+            return self.saldo_inicial + resumo.entradas - resumo.saidas
+        return self.saldo_inicial + self.entradas - self.saidas
 
 
 class Categoria(DaOrganizacao):

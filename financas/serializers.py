@@ -30,9 +30,11 @@ class NomeUnicoPorOrganizacao:
 
 
 class ContaSerializer(NomeUnicoPorOrganizacao, serializers.ModelSerializer):
+    saldo_atual = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
+
     class Meta:
         model = Conta
-        fields = ["id", "nome", "tipo"]
+        fields = ["id", "nome", "tipo", "saldo_inicial", "saldo_atual"]
 
 
 class CategoriaSerializer(NomeUnicoPorOrganizacao, serializers.ModelSerializer):

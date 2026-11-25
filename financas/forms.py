@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 from django.utils import timezone
 
@@ -45,10 +47,18 @@ class FormDaOrganizacao(forms.ModelForm):
 class ContaForm(FormDaOrganizacao):
     class Meta:
         model = Conta
-        fields = ["nome", "tipo"]
+        fields = ["nome", "tipo", "saldo_inicial"]
+        widgets = {"saldo_inicial": forms.NumberInput(attrs={"step": "0.01"})}
+        help_texts = {
+            "saldo_inicial": "Quanto já havia na conta quando você começou a usar o sistema. Pode ser negativo.",
+        }
 
     def clean_nome(self):
         return self.validar_nome_unico(self.cleaned_data.get("nome"))
+
+    def clean_saldo_inicial(self):
+        valor = self.cleaned_data.get("saldo_inicial")
+        return Decimal("0.00") if valor is None else valor
 
 
 class CategoriaForm(FormDaOrganizacao):

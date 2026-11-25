@@ -6,7 +6,7 @@ from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
 
 ANTES = [("financas", "0002_sqlite_centavos")]
-DEPOIS = [("financas", "0005_organizacao_obrigatoria")]
+DEPOIS = [("financas", "0006_conta_saldo_inicial")]
 
 
 class MigracaoDadosDaP1Test(TransactionTestCase):

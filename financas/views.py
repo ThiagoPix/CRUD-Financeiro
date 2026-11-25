@@ -89,10 +89,11 @@ def inicio(request):
 
 @require_GET
 def conta_lista(request):
-    linhas = [{"celulas": [conta.nome, conta.get_tipo_display()], **acoes(conta, "conta")} for conta in Conta.objects.filter(organizacao=org_atual(request))]
+    contas = Conta.objects.filter(organizacao=org_atual(request)).com_saldo()
+    linhas = [{"celulas": [conta.nome, conta.get_tipo_display(), dinheiro(conta.saldo_atual)], **acoes(conta, "conta")} for conta in contas]
     return render(request, "financas/lista.html", {
         "titulo": "Contas", "subtitulo": "Carteira, conta corrente, poupança. Cada uma no seu lugar.",
-        "secao": "contas", "colunas": ["Nome", "Tipo"], "linhas": linhas,
+        "secao": "contas", "colunas": ["Nome", "Tipo", "Saldo atual"], "linhas": linhas,
         "criar_url": reverse("financas:conta_criar"), "vazio": "Cadastre sua primeira conta para começar a registrar movimentações.",
     })
 

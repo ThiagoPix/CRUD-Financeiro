@@ -22,13 +22,13 @@ class ProtegidoContraExclusao:
 
 
 class ContaListCreate(OrganizacaoMixin, generics.ListCreateAPIView):
-    queryset = Conta.objects.all()
+    queryset = Conta.objects.com_saldo()
     serializer_class = ContaSerializer
     permission_classes = [AdminEscreveOperadorLe]
 
 
 class ContaDetail(OrganizacaoMixin, ProtegidoContraExclusao, generics.RetrieveUpdateDestroyAPIView):
-    queryset = Conta.objects.all()
+    queryset = Conta.objects.com_saldo()
     serializer_class = ContaSerializer
     permission_classes = [AdminEscreveOperadorLe]
 

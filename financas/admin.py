@@ -9,7 +9,7 @@ class SemExclusaoEmLoteAdmin(admin.ModelAdmin):
 
 @admin.register(Conta)
 class ContaAdmin(SemExclusaoEmLoteAdmin):
-    list_display = ("nome", "tipo", "organizacao")
+    list_display = ("nome", "tipo", "saldo_inicial", "organizacao")
     search_fields = ("nome",)
     list_filter = ("organizacao", "tipo")
 
