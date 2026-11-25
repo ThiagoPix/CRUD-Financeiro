@@ -88,4 +88,5 @@ LOGOUT_REDIRECT_URL = "login"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["core.api.TemPerfil"],
+    "DEFAULT_THROTTLE_RATES": {"cadastro": "10/hour"},
 }

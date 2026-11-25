@@ -1,5 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
-from rest_framework import permissions
+from rest_framework import permissions, serializers
 
 
 class TemPerfil(permissions.BasePermission):
@@ -47,3 +47,18 @@ class AdminExcluiOperadorEscreve(TemPerfil):
         if not super().has_permission(request, view):
             return False
         return request.method != "DELETE" or request.user.perfil.eh_admin
+
+
+class SomenteAdmin(TemPerfil):
+    """Só o administrador da organização, para qualquer método."""
+
+    message = "Somente o administrador pode acessar este recurso."
+
+    def has_permission(self, request, view):
+        return super().has_permission(request, view) and request.user.perfil.eh_admin
+
+
+def erro_da_api(erro):
+    """Converte a ValidationError das regras (servicos.py) em erro 400 da API."""
+    detalhe = erro.message_dict if hasattr(erro, "error_dict") else erro.messages
+    return serializers.ValidationError(detalhe)
