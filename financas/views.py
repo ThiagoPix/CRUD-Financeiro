@@ -13,7 +13,11 @@ from django.views.decorators.http import require_GET, require_http_methods
 from core.organizacao import org_atual
 from core.permissoes import papel_requerido
 
-from .forms import CategoriaForm, ContaForm, FiltroLancamentoForm, FiltroMesForm, LancamentoForm, OrcamentoForm, ParcelaForm
+from .dashboard import metricas
+from .forms import (
+    CategoriaForm, ContaForm, FiltroLancamentoForm, FiltroMesForm, LancamentoForm, OrcamentoForm, ParcelaForm,
+    PeriodoForm,
+)
 from .models import Categoria, Conta, Lancamento, Orcamento, Parcela
 from .services import excluir_lancamento, salvar_lancamento, totais_orcamento
 from .templatetags.financas_tags import dinheiro
@@ -247,4 +251,17 @@ def parcela_editar(request, pk):
         "titulo": f"Editar parcela {parcela.numero}", "secao": "lancamentos", "form": form,
         "subtitulo": f"{parcela.lancamento.descricao} · {dinheiro(parcela.valor)}. Atualize o vencimento ou a situação de pagamento.",
         "voltar_url": reverse("financas:lancamento_detalhe", args=[parcela.lancamento_id]),
+    })
+
+
+@require_GET
+def dashboard(request):
+    org = org_atual(request)
+    form = PeriodoForm(request.GET) if request.GET else PeriodoForm()
+    inicio = fim = None
+    if form.is_bound and form.is_valid():
+        inicio, fim = form.cleaned_data["inicio"], form.cleaned_data["fim"]
+    return render(request, "financas/dashboard.html", {
+        "titulo": "Dashboard", "secao": "dashboard", "form": form, "periodo_filtrado": bool(inicio or fim),
+        **metricas(org, inicio, fim),
     })

@@ -152,3 +152,15 @@ class FiltroMesForm(forms.Form):
         hoje = timezone.localdate()
         self.initial.setdefault("mes", hoje.month)
         self.initial.setdefault("ano", hoje.year)
+
+
+class PeriodoForm(forms.Form):
+    inicio = forms.DateField(label="De", required=False, widget=DataInput())
+    fim = forms.DateField(label="Até", required=False, widget=DataInput())
+
+    def clean(self):
+        dados = super().clean()
+        inicio, fim = dados.get("inicio"), dados.get("fim")
+        if inicio and fim and fim < inicio:
+            raise forms.ValidationError("A data final não pode ser anterior à data inicial.")
+        return dados

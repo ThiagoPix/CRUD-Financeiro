@@ -28,6 +28,7 @@
                 {% endif %}
             </div>
             {% if user.is_authenticated %}<nav class="navegacao" aria-label="Navegação principal">
+                <a href="{% url 'financas:dashboard' %}" {% if secao == 'dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
                 <a href="{% url 'financas:lancamento_lista' %}" {% if secao == 'lancamentos' %}aria-current="page"{% endif %}>Lançamentos</a>
                 <a href="{% url 'financas:conta_lista' %}" {% if secao == 'contas' %}aria-current="page"{% endif %}>Contas</a>
                 <a href="{% url 'financas:categoria_lista' %}" {% if secao == 'categorias' %}aria-current="page"{% endif %}>Categorias</a>

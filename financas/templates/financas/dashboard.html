@@ -1,0 +1,88 @@
+{% extends 'financas/base.html' %}
+{% load financas_tags %}
+
+{% block title %}Dashboard{% endblock %}
+{% block caminho %}Dashboard{% endblock %}
+
+{% block content %}
+<header class="cabecalho-pagina">
+    <div>
+        <h1>Dashboard<span class="ponto-titulo" aria-hidden="true">.</span></h1>
+        <p class="subtitulo">Quanto entrou, quanto saiu e onde o dinheiro está indo{% if user.perfil %} na {{ user.perfil.organizacao }}{% endif %}.</p>
+    </div>
+</header>
+
+<section class="painel painel-filtros" aria-labelledby="titulo-periodo">
+    <h2 id="titulo-periodo" class="titulo-pequeno">Período</h2>
+    <form method="get" class="formulario-filtros">
+        {% for field in form %}
+            <div class="campo{% if field.errors %} campo-com-erro{% endif %}">
+                {{ field.label_tag }}
+                {{ field }}
+                {% for error in field.errors %}<p class="erro-campo">{{ error }}</p>{% endfor %}
+            </div>
+        {% endfor %}
+        <div class="acoes-filtro"><button class="botao botao-primario" type="submit">Filtrar</button><a class="link-discreto" href="?">Limpar</a></div>
+        {% if form.non_field_errors %}<div class="erros-formulario" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    </form>
+</section>
+
+<section class="cartoes" aria-label="Totais do período">
+    <div class="cartao"><small>Receitas</small><strong>{{ totais.receitas|dinheiro }}</strong></div>
+    <div class="cartao"><small>Despesas</small><strong>{{ totais.despesas|dinheiro }}</strong></div>
+    <div class="cartao{% if totais.saldo < 0 %} cartao-negativo{% endif %}"><small>Saldo</small><strong>{{ totais.saldo|dinheiro }}</strong></div>
+    <div class="cartao"><small>A pagar ({{ a_pagar.quantidade }} parcela{{ a_pagar.quantidade|pluralize }})</small><strong>{{ a_pagar.valor|dinheiro }}</strong></div>
+</section>
+
+<div class="grade-dashboard">
+    <section class="painel painel-registros" aria-labelledby="titulo-ranking">
+        <div class="painel-cabecalho"><h2 id="titulo-ranking" class="titulo-pequeno">Onde mais se gasta</h2></div>
+        <div class="tabela-rolagem" role="region" aria-label="Ranking de despesas por categoria" tabindex="0">
+            <table>
+                <thead><tr><th scope="col">Categoria</th><th scope="col">Total</th></tr></thead>
+                <tbody>
+                    {% for item in ranking %}
+                        <tr><td>{{ item.categoria__nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2">Sem despesas no período.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="painel painel-registros" aria-labelledby="titulo-contas">
+        <div class="painel-cabecalho"><h2 id="titulo-contas" class="titulo-pequeno">Despesas por conta</h2></div>
+        <div class="tabela-rolagem" role="region" aria-label="Despesas por conta" tabindex="0">
+            <table>
+                <thead><tr><th scope="col">Conta</th><th scope="col">Total</th></tr></thead>
+                <tbody>
+                    {% for item in por_conta %}
+                        <tr><td>{{ item.conta__nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2">Sem despesas no período.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+{% if user.perfil.eh_admin %}
+<section class="painel painel-registros" aria-labelledby="titulo-serie">
+    <div class="painel-cabecalho"><h2 id="titulo-serie" class="titulo-pequeno">Mês a mês</h2></div>
+    <div class="tabela-rolagem" role="region" aria-label="Receitas e despesas por mês" tabindex="0">
+        <table>
+            <thead><tr><th scope="col">Mês</th><th scope="col">Receitas</th><th scope="col">Despesas</th></tr></thead>
+            <tbody>
+                {% for item in serie %}
+                    <tr><td>{{ item.mes|date:"m/Y" }}</td><td>{{ item.receitas|dinheiro }}</td><td>{{ item.despesas|dinheiro }}</td></tr>
+                {% empty %}
+                    <tr><td colspan="3">Sem lançamentos no período.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
