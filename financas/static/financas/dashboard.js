@@ -13,8 +13,8 @@
         data: {
             labels: dados.map(function (d) { return d.mes; }),
             datasets: [
-                { label: "Receitas", data: dados.map(function (d) { return d.receitas; }), backgroundColor: "#adc0cf" },
-                { label: "Despesas", data: dados.map(function (d) { return d.despesas; }), backgroundColor: "#d6a77b" }
+                { label: "Recebido", data: dados.map(function (d) { return d.recebido; }), backgroundColor: "#adc0cf" },
+                { label: "Pago", data: dados.map(function (d) { return d.pago; }), backgroundColor: "#d6a77b" }
             ]
         },
         options: {

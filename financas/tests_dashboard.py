@@ -9,6 +9,7 @@ from core.models import Organizacao, Perfil
 
 from .exportacao import neutralizar
 from .models import Categoria, Conta, Lancamento
+from .services import gravar_lancamento
 
 
 def montar(nome, papel="admin"):
@@ -21,51 +22,80 @@ def montar(nome, papel="admin"):
     return {"org": org, "user": user, "conta": conta, "receita": receita, "despesa": despesa}
 
 
-def lancar(dados, categoria, valor, dia, descricao="Item"):
-    return Lancamento.objects.create(
+def lancar(dados, categoria, valor, dia, descricao="Item", parcelas=1, pagas=0):
+    """Cria o lançamento com suas parcelas e marca as `pagas` primeiras como pagas."""
+    lancamento = gravar_lancamento(Lancamento(
         organizacao=dados["org"], descricao=descricao, conta=dados["conta"], categoria=dados[categoria],
-        valor_total=Decimal(valor), data=dia, primeiro_vencimento=dia, quantidade_parcelas=1,
-    )
+        valor_total=Decimal(valor), data=dia, primeiro_vencimento=dia, quantidade_parcelas=parcelas,
+    ))
+    for parcela in lancamento.parcelas.all()[:pagas]:
+        parcela.paga = True
+        parcela.save(update_fields=["paga"])
+    return lancamento
 
 
 class DashboardTest(TestCase):
     def setUp(self):
-        # dados faceis de conferir a mao: A tem 3 lancamentos, B tem 5
+        # Dados fáceis de conferir à mão.
+        # A: receita 1000 paga (jan), despesa 300 paga (jan), despesa 200 pendente (fev). B: 5 x 50 pendentes.
         self.a = montar("A")
         self.b = montar("B")
-        lancar(self.a, "receita", "1000.00", date(2026, 1, 10))
-        lancar(self.a, "despesa", "300.00", date(2026, 1, 20))
+        lancar(self.a, "receita", "1000.00", date(2026, 1, 10), pagas=1)
+        lancar(self.a, "despesa", "300.00", date(2026, 1, 20), pagas=1)
         lancar(self.a, "despesa", "200.00", date(2026, 2, 5))
         for _ in range(5):
             lancar(self.b, "despesa", "50.00", date(2026, 1, 15))
         self.client.force_login(self.a["user"])
 
-    def test_totais_so_da_organizacao(self):
-        contexto = self.client.get(reverse("financas:dashboard")).context
-        self.assertEqual(contexto["totais"]["quantidade"], 3)
-        self.assertEqual(contexto["totais"]["receitas"], Decimal("1000.00"))
-        self.assertEqual(contexto["totais"]["despesas"], Decimal("500.00"))
-        self.assertEqual(contexto["totais"]["saldo"], Decimal("500.00"))
+    def contexto(self, **parametros):
+        return self.client.get(reverse("financas:dashboard"), parametros).context
+
+    def test_fluxo_so_da_organizacao(self):
+        fluxo = self.contexto()["fluxo"]
+        self.assertEqual(fluxo["recebido"], Decimal("1000.00"))
+        self.assertEqual(fluxo["pago"], Decimal("300.00"))
+        self.assertEqual(fluxo["a_pagar"], Decimal("200.00"))
+        self.assertEqual(fluxo["a_receber"], Decimal("0.00"))
+        self.assertEqual(fluxo["lancamentos"], 3)
+
+    def test_saldo_realizado_ignora_o_que_nao_foi_pago(self):
+        fluxo = self.contexto()["fluxo"]
+        self.assertEqual(fluxo["saldo_realizado"], Decimal("700.00"))
+        self.assertEqual(fluxo["saldo_previsto"], Decimal("500.00"))
+
+    def test_compra_parcelada_aparece_parcela_a_parcela(self):
+        lancar(self.a, "despesa", "300.00", date(2026, 3, 1), descricao="Parcelada", parcelas=3, pagas=1)
+        fluxo = self.contexto(inicio="2026-03-01", fim="2026-03-31")["fluxo"]
+        self.assertEqual(fluxo["pago"], Decimal("100.00"))
+        self.assertEqual(fluxo["a_pagar"], Decimal("0.00"))
+        abril = self.contexto(inicio="2026-04-01", fim="2026-04-30")["fluxo"]
+        self.assertEqual(abril["pago"], Decimal("0.00"))
+        self.assertEqual(abril["a_pagar"], Decimal("100.00"))
 
     def test_ranking_e_distribuicao_so_da_organizacao(self):
-        contexto = self.client.get(reverse("financas:dashboard")).context
-        self.assertEqual(contexto["ranking"], [{"categoria__nome": "Fornecedor", "total": Decimal("500.00")}])
-        self.assertEqual(contexto["por_conta"], [{"conta__nome": "Banco", "total": Decimal("500.00")}])
+        contexto = self.contexto()
+        self.assertEqual(contexto["ranking"], [{"nome": "Fornecedor", "total": Decimal("500.00")}])
+        self.assertEqual(contexto["por_conta"], [{"nome": "Banco", "total": Decimal("500.00")}])
 
-    def test_periodo_filtra(self):
-        contexto = self.client.get(reverse("financas:dashboard"), {"inicio": "2026-02-01", "fim": "2026-02-28"}).context
-        self.assertEqual(contexto["totais"]["quantidade"], 1)
-        self.assertEqual(contexto["totais"]["despesas"], Decimal("200.00"))
+    def test_periodo_filtra_por_vencimento(self):
+        fluxo = self.contexto(inicio="2026-02-01", fim="2026-02-28")["fluxo"]
+        self.assertEqual(fluxo["pago"], Decimal("0.00"))
+        self.assertEqual(fluxo["a_pagar"], Decimal("200.00"))
+        self.assertEqual(fluxo["lancamentos"], 1)
 
-    def test_serie_mensal_ordenada(self):
-        meses = [item["mes"] for item in self.client.get(reverse("financas:dashboard")).context["serie"]]
+    def test_serie_mensal_ordenada_com_os_quatro_valores(self):
+        serie = self.contexto()["serie"]
+        meses = [item["mes"] for item in serie]
         self.assertEqual(meses, sorted(meses))
-        self.assertEqual(len(meses), 2)
+        self.assertEqual(len(serie), 2)
+        self.assertEqual(serie[0]["recebido"], Decimal("1000.00"))
+        self.assertEqual(serie[0]["pago"], Decimal("300.00"))
+        self.assertEqual(serie[1]["a_pagar"], Decimal("200.00"))
 
     def test_periodo_invalido_nao_gera_erro_500(self):
         resposta = self.client.get(reverse("financas:dashboard"), {"inicio": "abc"})
         self.assertEqual(resposta.status_code, 200)
-        self.assertEqual(resposta.context["totais"]["quantidade"], 3)
+        self.assertEqual(resposta.context["fluxo"]["lancamentos"], 3)
 
     def test_fim_antes_do_inicio_mostra_erro(self):
         resposta = self.client.get(reverse("financas:dashboard"), {"inicio": "2026-03-01", "fim": "2026-01-01"})
@@ -76,16 +106,16 @@ class DashboardTest(TestCase):
         self.client.force_login(vazia["user"])
         resposta = self.client.get(reverse("financas:dashboard"))
         self.assertEqual(resposta.status_code, 200)
-        self.assertEqual(resposta.context["totais"]["quantidade"], 0)
+        self.assertEqual(resposta.context["fluxo"]["lancamentos"], 0)
         self.assertContains(resposta, "Sem despesas no período.")
 
     def test_numero_de_consultas_nao_cresce_com_os_dados(self):
-        # 4 de sessao/usuario/perfil/organizacao + 5 metricas; nao depende da quantidade de lancamentos
-        with self.assertNumQueries(9):
+        # 4 de sessão/usuário/perfil/organização + 4 métricas; não depende da quantidade de lançamentos
+        with self.assertNumQueries(8):
             self.client.get(reverse("financas:dashboard"))
         for _ in range(20):
             lancar(self.a, "despesa", "10.00", date(2026, 4, 1))
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(8):
             self.client.get(reverse("financas:dashboard"))
 
     def test_operador_nao_ve_serie_nem_grafico(self):
@@ -105,17 +135,20 @@ class DashboardTest(TestCase):
 class ExportacaoCsvTest(TestCase):
     def setUp(self):
         self.a = montar("A")
-        lancar(self.a, "despesa", "300.00", date(2026, 1, 20), descricao="=HYPERLINK(1)")
+        lancar(self.a, "despesa", "300.00", date(2026, 1, 20), descricao="=HYPERLINK(1)", pagas=1)
         lancar(self.a, "receita", "100.00", date(2026, 3, 1), descricao="Normal")
         self.client.force_login(self.a["user"])
 
-    def test_admin_baixa_csv_com_formula_neutralizada(self):
+    def test_admin_baixa_csv_de_parcelas_com_formula_neutralizada(self):
         resposta = self.client.get(reverse("financas:dashboard_exportar"))
         self.assertEqual(resposta.status_code, 200)
         self.assertIn("text/csv", resposta["Content-Type"])
         texto = resposta.content.decode("utf-8")
         self.assertIn("'=HYPERLINK(1)", texto)
         self.assertIn("300,00", texto)
+        self.assertIn("Paga", texto)
+        self.assertIn("Pendente", texto)
+        self.assertIn("1/1", texto)
 
     def test_csv_respeita_periodo_e_organizacao(self):
         outra = montar("Outra")
@@ -144,18 +177,19 @@ class ApiDashboardTest(TestCase):
     def setUp(self):
         self.a = montar("A")
         self.b = montar("B")
-        lancar(self.a, "receita", "1000.00", date(2026, 1, 10))
+        lancar(self.a, "receita", "1000.00", date(2026, 1, 10), pagas=1)
         lancar(self.b, "despesa", "50.00", date(2026, 1, 15))
 
     def test_anonimo_recebe_403(self):
         self.assertEqual(self.client.get(reverse("api_dashboard")).status_code, 403)
 
-    def test_totais_so_da_organizacao(self):
+    def test_fluxo_so_da_organizacao(self):
         self.client.force_login(self.a["user"])
-        dados = self.client.get(reverse("api_dashboard")).json()
-        self.assertEqual(dados["totais"]["quantidade"], 1)
-        self.assertEqual(dados["totais"]["receitas"], 1000.0)
-        self.assertEqual(dados["totais"]["despesas"], 0)
+        fluxo = self.client.get(reverse("api_dashboard")).json()["fluxo"]
+        self.assertEqual(fluxo["lancamentos"], 1)
+        self.assertEqual(fluxo["recebido"], 1000.0)
+        self.assertEqual(fluxo["pago"], 0)
+        self.assertEqual(fluxo["a_pagar"], 0)
 
     def test_operador_nao_recebe_serie(self):
         operador = User.objects.create_user("op_api", password="senha-teste-123")

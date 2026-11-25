@@ -8,7 +8,7 @@
 <header class="cabecalho-pagina">
     <div>
         <h1>Dashboard<span class="ponto-titulo" aria-hidden="true">.</span></h1>
-        <p class="subtitulo">Quanto entrou, quanto saiu e onde o dinheiro está indo{% if user.perfil %} na {{ user.perfil.organizacao }}{% endif %}.</p>
+        <p class="subtitulo">Quanto entrou, quanto saiu e o que ainda vem pela frente{% if user.perfil %} na {{ user.perfil.organizacao }}{% endif %}.</p>
     </div>
 </header>
 
@@ -28,11 +28,14 @@
 </section>
 
 <section class="cartoes" aria-label="Totais do período">
-    <div class="cartao"><small>Receitas</small><strong>{{ totais.receitas|dinheiro }}</strong></div>
-    <div class="cartao"><small>Despesas</small><strong>{{ totais.despesas|dinheiro }}</strong></div>
-    <div class="cartao{% if totais.saldo < 0 %} cartao-negativo{% endif %}"><small>Saldo</small><strong>{{ totais.saldo|dinheiro }}</strong></div>
-    <div class="cartao"><small>A pagar ({{ a_pagar.quantidade }} parcela{{ a_pagar.quantidade|pluralize }})</small><strong>{{ a_pagar.valor|dinheiro }}</strong></div>
+    <div class="cartao"><small>Recebido</small><strong>{{ fluxo.recebido|dinheiro }}</strong></div>
+    <div class="cartao"><small>Pago</small><strong>{{ fluxo.pago|dinheiro }}</strong></div>
+    <div class="cartao{% if fluxo.saldo_realizado < 0 %} cartao-negativo{% endif %}"><small>Saldo realizado</small><strong>{{ fluxo.saldo_realizado|dinheiro }}</strong></div>
+    <div class="cartao"><small>A receber ({{ fluxo.qtd_a_receber }} parcela{{ fluxo.qtd_a_receber|pluralize }})</small><strong>{{ fluxo.a_receber|dinheiro }}</strong></div>
+    <div class="cartao"><small>A pagar ({{ fluxo.qtd_a_pagar }} parcela{{ fluxo.qtd_a_pagar|pluralize }})</small><strong>{{ fluxo.a_pagar|dinheiro }}</strong></div>
+    <div class="cartao{% if fluxo.saldo_previsto < 0 %} cartao-negativo{% endif %}"><small>Saldo previsto</small><strong>{{ fluxo.saldo_previsto|dinheiro }}</strong></div>
 </section>
+<p class="nota-criterio">Todos os valores são parcelas, pelo mês de vencimento. Recebido e pago contam só parcelas marcadas como pagas. O saldo previsto soma também o que ainda está pendente.</p>
 
 <div class="grade-dashboard">
     <section class="painel painel-registros" aria-labelledby="titulo-ranking">
@@ -42,7 +45,7 @@
                 <thead><tr><th scope="col">Categoria</th><th scope="col">Total</th></tr></thead>
                 <tbody>
                     {% for item in ranking %}
-                        <tr><td>{{ item.categoria__nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
+                        <tr><td>{{ item.nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
                     {% empty %}
                         <tr><td colspan="2">Sem despesas no período.</td></tr>
                     {% endfor %}
@@ -58,7 +61,7 @@
                 <thead><tr><th scope="col">Conta</th><th scope="col">Total</th></tr></thead>
                 <tbody>
                     {% for item in por_conta %}
-                        <tr><td>{{ item.conta__nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
+                        <tr><td>{{ item.nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
                     {% empty %}
                         <tr><td colspan="2">Sem despesas no período.</td></tr>
                     {% endfor %}
@@ -72,20 +75,20 @@
 <section class="painel painel-registros" aria-labelledby="titulo-serie">
     <div class="painel-cabecalho">
         <h2 id="titulo-serie" class="titulo-pequeno">Mês a mês</h2>
-        <a class="link-acao" href="{% url 'financas:dashboard_exportar' %}?inicio={{ form.inicio.value|default:'' }}&fim={{ form.fim.value|default:'' }}">Exportar CSV</a>
+        <a class="link-acao" href="{% url 'financas:dashboard_exportar' %}?inicio={{ form.inicio.value|default:'' }}&fim={{ form.fim.value|default:'' }}">Exportar parcelas (CSV)</a>
     </div>
     {% if serie_grafico %}
-        <div class="grafico"><canvas id="grafico-mensal" role="img" aria-label="Gráfico de barras com receitas e despesas por mês. Os mesmos valores estão na tabela abaixo."></canvas></div>
+        <div class="grafico"><canvas id="grafico-mensal" role="img" aria-label="Gráfico de barras com o recebido e o pago por mês. Os mesmos valores estão na tabela abaixo."></canvas></div>
         {{ serie_grafico|json_script:"dados-mensais" }}
     {% endif %}
-    <div class="tabela-rolagem" role="region" aria-label="Receitas e despesas por mês" tabindex="0">
+    <div class="tabela-rolagem" role="region" aria-label="Recebido, pago, a receber e a pagar por mês" tabindex="0">
         <table>
-            <thead><tr><th scope="col">Mês</th><th scope="col">Receitas</th><th scope="col">Despesas</th></tr></thead>
+            <thead><tr><th scope="col">Mês</th><th scope="col">Recebido</th><th scope="col">Pago</th><th scope="col">A receber</th><th scope="col">A pagar</th></tr></thead>
             <tbody>
                 {% for item in serie %}
-                    <tr><td>{{ item.mes|date:"m/Y" }}</td><td>{{ item.receitas|dinheiro }}</td><td>{{ item.despesas|dinheiro }}</td></tr>
+                    <tr><td>{{ item.mes|date:"m/Y" }}</td><td>{{ item.recebido|dinheiro }}</td><td>{{ item.pago|dinheiro }}</td><td>{{ item.a_receber|dinheiro }}</td><td>{{ item.a_pagar|dinheiro }}</td></tr>
                 {% empty %}
-                    <tr><td colspan="3">Sem lançamentos no período.</td></tr>
+                    <tr><td colspan="5">Sem parcelas no período.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
