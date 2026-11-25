@@ -37,66 +37,14 @@
 </section>
 <p class="nota-criterio">Todos os valores são parcelas, pelo mês de vencimento. Recebido e pago contam só parcelas marcadas como pagas. O saldo previsto soma também o que ainda está pendente.</p>
 
-<div class="grade-dashboard">
-    <section class="painel painel-registros" aria-labelledby="titulo-ranking">
-        <div class="painel-cabecalho"><h2 id="titulo-ranking" class="titulo-pequeno">Onde mais se gasta</h2></div>
-        <div class="tabela-rolagem" role="region" aria-label="Ranking de despesas por categoria" tabindex="0">
-            <table>
-                <thead><tr><th scope="col">Categoria</th><th scope="col">Total</th></tr></thead>
-                <tbody>
-                    {% for item in ranking %}
-                        <tr><td>{{ item.nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
-                    {% empty %}
-                        <tr><td colspan="2">Sem despesas no período.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="painel painel-registros" aria-labelledby="titulo-contas">
-        <div class="painel-cabecalho"><h2 id="titulo-contas" class="titulo-pequeno">Despesas por conta</h2></div>
-        <div class="tabela-rolagem" role="region" aria-label="Despesas por conta" tabindex="0">
-            <table>
-                <thead><tr><th scope="col">Conta</th><th scope="col">Total</th></tr></thead>
-                <tbody>
-                    {% for item in por_conta %}
-                        <tr><td>{{ item.nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
-                    {% empty %}
-                        <tr><td colspan="2">Sem despesas no período.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-</div>
-
-<section class="painel painel-registros" aria-labelledby="titulo-saldos">
-    <div class="painel-cabecalho"><h2 id="titulo-saldos" class="titulo-pequeno">Saldo por conta</h2></div>
-    <div class="tabela-rolagem" role="region" aria-label="Saldo atual de cada conta" tabindex="0">
-        <table>
-            <thead><tr><th scope="col">Conta</th><th scope="col">Tipo</th><th scope="col">Saldo atual</th></tr></thead>
-            <tbody>
-                {% for item in contas %}
-                    <tr><td>{{ item.nome }}</td><td>{{ item.tipo }}</td><td>{{ item.saldo|dinheiro }}</td></tr>
-                {% empty %}
-                    <tr><td colspan="3">Nenhuma conta cadastrada.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <p class="nota-criterio">O saldo é acumulado, não depende do período: saldo inicial mais o recebido, menos o pago.</p>
-</section>
-
 {% if user.perfil.eh_admin %}
 <section class="painel painel-registros" aria-labelledby="titulo-serie">
     <div class="painel-cabecalho">
         <h2 id="titulo-serie" class="titulo-pequeno">Mês a mês</h2>
         <a class="link-acao" href="{% url 'financas:dashboard_exportar' %}?inicio={{ form.inicio.value|default:'' }}&fim={{ form.fim.value|default:'' }}">Exportar parcelas (CSV)</a>
     </div>
-    {% if serie_grafico %}
-        <div class="grafico"><canvas id="grafico-mensal" role="img" aria-label="Gráfico de barras com o recebido e o pago por mês. Os mesmos valores estão na tabela abaixo."></canvas></div>
-        {{ serie_grafico|json_script:"dados-mensais" }}
+    {% if graficos.fluxo %}
+        <div class="grafico"><canvas id="grafico-fluxo" role="img" aria-label="Gráfico de barras com o recebido e o pago por mês e uma linha com o saldo realizado acumulado. Os mesmos valores estão na tabela abaixo."></canvas></div>
     {% endif %}
     <div class="tabela-rolagem" role="region" aria-label="Recebido, pago, a receber e a pagar por mês" tabindex="0">
         <table>
@@ -111,7 +59,104 @@
         </table>
     </div>
 </section>
+
+{% if graficos.previsao %}
+<section class="painel painel-registros" aria-labelledby="titulo-previsao">
+    <div class="painel-cabecalho"><h2 id="titulo-previsao" class="titulo-pequeno">O que ainda vem pela frente</h2></div>
+    <div class="grafico grafico-baixo"><canvas id="grafico-previsao" role="img" aria-label="Gráfico de barras empilhadas com o que ainda há a receber e a pagar em cada mês. Os valores também estão na tabela Mês a mês."></canvas></div>
+</section>
 {% endif %}
+{% endif %}
+
+<div class="grade-dashboard">
+    <section class="painel painel-registros" aria-labelledby="titulo-ranking">
+        <div class="painel-cabecalho"><h2 id="titulo-ranking" class="titulo-pequeno">Onde mais se gasta</h2></div>
+        {% if graficos.despesas_categoria %}<div class="grafico grafico-baixo"><canvas id="grafico-despesas-categoria" role="img" aria-label="Gráfico de barras horizontais com as despesas por categoria. Os valores estão na tabela abaixo."></canvas></div>{% endif %}
+        <div class="tabela-rolagem" role="region" aria-label="Ranking de despesas por categoria" tabindex="0">
+            <table>
+                <thead><tr><th scope="col">Categoria</th><th scope="col">Total</th></tr></thead>
+                <tbody>
+                    {% for item in ranking %}
+                        <tr><td>{{ item.nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2">Sem despesas no período.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="painel painel-registros" aria-labelledby="titulo-receitas">
+        <div class="painel-cabecalho"><h2 id="titulo-receitas" class="titulo-pequeno">De onde vem a receita</h2></div>
+        {% if graficos.receitas_categoria %}<div class="grafico grafico-baixo"><canvas id="grafico-receitas-categoria" role="img" aria-label="Gráfico de barras horizontais com as receitas por categoria. Os valores estão na tabela abaixo."></canvas></div>{% endif %}
+        <div class="tabela-rolagem" role="region" aria-label="Ranking de receitas por categoria" tabindex="0">
+            <table>
+                <thead><tr><th scope="col">Categoria</th><th scope="col">Total</th></tr></thead>
+                <tbody>
+                    {% for item in receitas %}
+                        <tr><td>{{ item.nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2">Sem receitas no período.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="painel painel-registros" aria-labelledby="titulo-contas">
+        <div class="painel-cabecalho"><h2 id="titulo-contas" class="titulo-pequeno">Despesas por conta</h2></div>
+        {% if graficos.despesas_conta %}<div class="grafico grafico-baixo"><canvas id="grafico-despesas-conta" role="img" aria-label="Gráfico de barras horizontais com as despesas por conta. Os valores estão na tabela abaixo."></canvas></div>{% endif %}
+        <div class="tabela-rolagem" role="region" aria-label="Despesas por conta" tabindex="0">
+            <table>
+                <thead><tr><th scope="col">Conta</th><th scope="col">Total</th></tr></thead>
+                <tbody>
+                    {% for item in por_conta %}
+                        <tr><td>{{ item.nome }}</td><td>{{ item.total|dinheiro }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2">Sem despesas no período.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="painel painel-registros" aria-labelledby="titulo-saldos">
+        <div class="painel-cabecalho"><h2 id="titulo-saldos" class="titulo-pequeno">Saldo por conta</h2></div>
+        {% if graficos.contas %}<div class="grafico grafico-baixo"><canvas id="grafico-saldo-contas" role="img" aria-label="Gráfico de barras com o saldo atual de cada conta. Os valores estão na tabela abaixo."></canvas></div>{% endif %}
+        <div class="tabela-rolagem" role="region" aria-label="Saldo atual de cada conta" tabindex="0">
+            <table>
+                <thead><tr><th scope="col">Conta</th><th scope="col">Tipo</th><th scope="col">Saldo atual</th></tr></thead>
+                <tbody>
+                    {% for item in contas %}
+                        <tr><td>{{ item.nome }}</td><td>{{ item.tipo }}</td><td>{{ item.saldo|dinheiro }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="3">Nenhuma conta cadastrada.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="nota-criterio">O saldo é acumulado, não depende do período: saldo inicial mais o recebido, menos o pago.</p>
+    </section>
+</div>
+
+<section class="painel painel-registros" aria-labelledby="titulo-orcamentos">
+    <div class="painel-cabecalho"><h2 id="titulo-orcamentos" class="titulo-pequeno">Orçamentos de {{ referencia|date:"m/Y" }}</h2><a class="link-acao" href="{% url 'financas:orcamento_lista' %}?mes={{ referencia.month }}&ano={{ referencia.year }}">Ver orçamentos</a></div>
+    {% if graficos.orcamentos %}<div class="grafico grafico-baixo"><canvas id="grafico-orcamentos" role="img" aria-label="Gráfico de barras horizontais comparando o limite e o gasto de cada orçamento do mês. Os valores estão na tabela abaixo."></canvas></div>{% endif %}
+    <div class="tabela-rolagem" role="region" aria-label="Limite e gasto de cada orçamento do mês" tabindex="0">
+        <table>
+            <thead><tr><th scope="col">Categoria</th><th scope="col">Limite</th><th scope="col">Gasto (pago)</th><th scope="col">Usado</th></tr></thead>
+            <tbody>
+                {% for item in orcamentos %}
+                    <tr><td>{{ item.nome }}</td><td>{{ item.limite|dinheiro }}</td><td>{{ item.gasto|dinheiro }}</td><td{% if item.excedido %} class="texto-alerta"{% endif %}>{{ item.percentual }}%{% if item.excedido %} (estourado){% endif %}</td></tr>
+                {% empty %}
+                    <tr><td colspan="4">Nenhum orçamento cadastrado para este mês.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{{ graficos|json_script:"dados-graficos" }}
 {% endblock %}
 
-{% block scripts %}{% if user.perfil.eh_admin and serie_grafico %}<script src="{% static 'financas/chart.umd.js' %}"></script><script src="{% static 'financas/dashboard.js' %}"></script>{% endif %}{% endblock %}
+{% block scripts %}<script src="{% static 'financas/chart.umd.js' %}"></script><script src="{% static 'financas/dashboard.js' %}"></script>{% endblock %}

@@ -297,3 +297,6 @@ body.secao-dashboard { --acento: #b9c79a; }
 .grade-dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 34px; margin-bottom: 38px; }
 .grafico { position: relative; height: 320px; margin: 8px 0 26px; }
 .nota-criterio { color: var(--suave); font-size: .8rem; margin: -22px 0 38px; max-width: 70ch; }
+.grafico-baixo { height: 240px; }
+.texto-alerta { color: var(--perigo); }
+.grade-dashboard .painel { margin-bottom: 8px; }

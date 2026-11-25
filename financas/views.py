@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET, require_http_methods
 from core.organizacao import org_atual
 from core.permissoes import papel_requerido
 
-from .dashboard import metricas
+from .dashboard import dados_dos_graficos, metricas
 from .forms import (
     CategoriaForm, ContaForm, FiltroLancamentoForm, FiltroMesForm, LancamentoForm, OrcamentoForm, ParcelaForm,
     PeriodoForm,
@@ -263,11 +263,7 @@ def dashboard(request):
     if form.is_bound and form.is_valid():
         inicio, fim = form.cleaned_data["inicio"], form.cleaned_data["fim"]
     dados = metricas(org, inicio, fim)
-    serie_grafico = [
-        {"mes": item["mes"].strftime("%m/%Y"), "recebido": float(item["recebido"] or 0), "pago": float(item["pago"] or 0)}
-        for item in dados["serie"]
-    ]
     return render(request, "financas/dashboard.html", {
         "titulo": "Dashboard", "secao": "dashboard", "form": form, "periodo_filtrado": bool(inicio or fim),
-        "serie_grafico": serie_grafico, **dados,
+        "graficos": dados_dos_graficos(dados, request.user.perfil.eh_admin), **dados,
     })

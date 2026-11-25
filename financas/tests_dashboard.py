@@ -110,12 +110,12 @@ class DashboardTest(TestCase):
         self.assertContains(resposta, "Sem despesas no período.")
 
     def test_numero_de_consultas_nao_cresce_com_os_dados(self):
-        # 4 de sessão/usuário/perfil/organização + 5 métricas (fluxo, ranking, contas, série, saldos); não depende da quantidade de lançamentos
-        with self.assertNumQueries(9):
+        # 4 de sessão/usuário/perfil/organização + 8 métricas (fluxo, 2 rankings, por conta, série, saldos, 2 de orçamento); não depende da quantidade de lançamentos
+        with self.assertNumQueries(12):
             self.client.get(reverse("financas:dashboard"))
         for _ in range(20):
             lancar(self.a, "despesa", "10.00", date(2026, 4, 1))
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(12):
             self.client.get(reverse("financas:dashboard"))
 
     def test_operador_nao_ve_serie_nem_grafico(self):
@@ -124,12 +124,89 @@ class DashboardTest(TestCase):
         self.client.force_login(operador)
         resposta = self.client.get(reverse("financas:dashboard"))
         self.assertNotContains(resposta, "Mês a mês")
-        self.assertNotContains(resposta, "grafico-mensal")
+        self.assertNotContains(resposta, "grafico-fluxo")
+        self.assertNotContains(resposta, "grafico-previsao")
+        self.assertNotContains(resposta, "saldo_acumulado")
 
     def test_administrador_ve_o_grafico(self):
         resposta = self.client.get(reverse("financas:dashboard"))
-        self.assertContains(resposta, "grafico-mensal")
-        self.assertContains(resposta, 'id="dados-mensais"')
+        self.assertContains(resposta, "grafico-fluxo")
+        self.assertContains(resposta, 'id="dados-graficos"')
+
+
+class GraficosDoDashboardTest(TestCase):
+    def setUp(self):
+        self.a = montar("A")
+        self.client.force_login(self.a["user"])
+        lancar(self.a, "receita", "1000.00", date(2026, 1, 10), pagas=1)
+        lancar(self.a, "despesa", "300.00", date(2026, 1, 20), pagas=1)
+        lancar(self.a, "despesa", "200.00", date(2026, 2, 5))
+        lancar(self.a, "receita", "400.00", date(2026, 2, 6))
+
+    def graficos(self, **parametros):
+        return self.client.get(reverse("financas:dashboard"), parametros).context["graficos"]
+
+    def test_administrador_recebe_os_sete_conjuntos_de_dados(self):
+        graficos = self.graficos()
+        for chave in ("fluxo", "previsao", "despesas_categoria", "receitas_categoria", "despesas_conta", "contas", "orcamentos"):
+            self.assertIn(chave, graficos)
+
+    def test_operador_nao_recebe_fluxo_nem_previsao(self):
+        operador = User.objects.create_user("op_g", password="senha-teste-123")
+        Perfil.objects.create(usuario=operador, organizacao=self.a["org"], papel="operador")
+        self.client.force_login(operador)
+        graficos = self.graficos()
+        self.assertNotIn("fluxo", graficos)
+        self.assertNotIn("previsao", graficos)
+        self.assertIn("despesas_categoria", graficos)
+
+    def test_fluxo_tem_saldo_realizado_acumulado(self):
+        fluxo = self.graficos()["fluxo"]
+        self.assertEqual([i["mes"] for i in fluxo], ["01/2026", "02/2026"])
+        self.assertEqual(fluxo[0]["saldo_acumulado"], 700.0)
+        self.assertEqual(fluxo[1]["saldo_acumulado"], 700.0)  # fevereiro nao tem nada pago
+
+    def test_previsao_so_tem_meses_com_pendencia(self):
+        previsao = self.graficos()["previsao"]
+        self.assertEqual(previsao, [{"mes": "02/2026", "a_receber": 400.0, "a_pagar": 200.0}])
+
+    def test_ranking_de_receitas_soma_recebido_e_a_receber(self):
+        receitas = self.client.get(reverse("financas:dashboard")).context["receitas"]
+        self.assertEqual(receitas, [{"nome": "Vendas", "total": Decimal("1400.00")}])
+
+    def test_orcamento_do_mes_usa_so_parcelas_pagas(self):
+        from .models import Orcamento
+        despesa = self.a["despesa"]
+        Orcamento.objects.create(organizacao=self.a["org"], categoria=despesa, mes=1, ano=2026, limite=Decimal("250.00"))
+        contexto = self.client.get(reverse("financas:dashboard"), {"fim": "2026-01-31"}).context
+        item = contexto["orcamentos"][0]
+        self.assertEqual(item["gasto"], Decimal("300.00"))
+        self.assertTrue(item["excedido"])
+        self.assertEqual(item["percentual"], Decimal("120.0"))
+        self.assertEqual(self.graficos(fim="2026-01-31")["orcamentos"], [{"nome": "Fornecedor", "limite": 250.0, "gasto": 300.0}])
+
+    def test_orcamentos_de_outra_organizacao_nao_aparecem(self):
+        from .models import Orcamento
+        outra = montar("B")
+        Orcamento.objects.create(organizacao=outra["org"], categoria=outra["despesa"], mes=1, ano=2026, limite=Decimal("10.00"))
+        self.assertEqual(self.client.get(reverse("financas:dashboard"), {"fim": "2026-01-31"}).context["orcamentos"], [])
+
+    def test_pagina_do_administrador_tem_todos_os_canvases(self):
+        from django.utils import timezone
+
+        from .models import Orcamento
+        hoje = timezone.localdate()
+        Orcamento.objects.create(organizacao=self.a["org"], categoria=self.a["despesa"], mes=hoje.month, ano=hoje.year, limite=Decimal("250.00"))
+        pagina = self.client.get(reverse("financas:dashboard"))
+        for canvas in ("grafico-fluxo", "grafico-previsao", "grafico-despesas-categoria", "grafico-receitas-categoria",
+                       "grafico-despesas-conta", "grafico-saldo-contas", "grafico-orcamentos"):
+            self.assertContains(pagina, f'id="{canvas}"')
+
+    def test_nenhum_grafico_de_pizza(self):
+        import pathlib
+        codigo = (pathlib.Path(__file__).parent / "static" / "financas" / "dashboard.js").read_text(encoding="utf-8")
+        for proibido in ('"pie"', '"doughnut"', '"polarArea"'):
+            self.assertNotIn(proibido, codigo)
 
 
 class ExportacaoCsvTest(TestCase):
