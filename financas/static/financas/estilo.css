@@ -295,3 +295,4 @@ body.secao-dashboard { --acento: #b9c79a; }
 .cartao strong { font-family: var(--serif); font-weight: 400; font-size: 1.7rem; letter-spacing: -.02em; overflow-wrap: anywhere; }
 .cartao-negativo strong { color: var(--perigo); }
 .grade-dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 34px; margin-bottom: 38px; }
+.grafico { position: relative; height: 320px; margin: 8px 0 26px; }

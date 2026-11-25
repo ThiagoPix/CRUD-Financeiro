@@ -1,5 +1,5 @@
 {% extends 'financas/base.html' %}
-{% load financas_tags %}
+{% load financas_tags static %}
 
 {% block title %}Dashboard{% endblock %}
 {% block caminho %}Dashboard{% endblock %}
@@ -71,6 +71,10 @@
 {% if user.perfil.eh_admin %}
 <section class="painel painel-registros" aria-labelledby="titulo-serie">
     <div class="painel-cabecalho"><h2 id="titulo-serie" class="titulo-pequeno">Mês a mês</h2></div>
+    {% if serie_grafico %}
+        <div class="grafico"><canvas id="grafico-mensal" role="img" aria-label="Gráfico de barras com receitas e despesas por mês. Os mesmos valores estão na tabela abaixo."></canvas></div>
+        {{ serie_grafico|json_script:"dados-mensais" }}
+    {% endif %}
     <div class="tabela-rolagem" role="region" aria-label="Receitas e despesas por mês" tabindex="0">
         <table>
             <thead><tr><th scope="col">Mês</th><th scope="col">Receitas</th><th scope="col">Despesas</th></tr></thead>
@@ -86,3 +90,5 @@
 </section>
 {% endif %}
 {% endblock %}
+
+{% block scripts %}{% if user.perfil.eh_admin and serie_grafico %}<script src="{% static 'financas/chart.umd.js' %}"></script><script src="{% static 'financas/dashboard.js' %}"></script>{% endif %}{% endblock %}

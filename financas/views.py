@@ -261,7 +261,12 @@ def dashboard(request):
     inicio = fim = None
     if form.is_bound and form.is_valid():
         inicio, fim = form.cleaned_data["inicio"], form.cleaned_data["fim"]
+    dados = metricas(org, inicio, fim)
+    serie_grafico = [
+        {"mes": item["mes"].strftime("%m/%Y"), "receitas": float(item["receitas"] or 0), "despesas": float(item["despesas"] or 0)}
+        for item in dados["serie"]
+    ]
     return render(request, "financas/dashboard.html", {
         "titulo": "Dashboard", "secao": "dashboard", "form": form, "periodo_filtrado": bool(inicio or fim),
-        **metricas(org, inicio, fim),
+        "serie_grafico": serie_grafico, **dados,
     })
