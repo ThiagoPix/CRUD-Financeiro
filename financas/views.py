@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
 from core.organizacao import org_atual
+from core.permissoes import papel_requerido
 
 from .forms import CategoriaForm, ContaForm, FiltroLancamentoForm, FiltroMesForm, LancamentoForm, OrcamentoForm, ParcelaForm
 from .models import Categoria, Conta, Lancamento, Orcamento, Parcela
@@ -93,16 +94,19 @@ def conta_lista(request):
 
 
 @require_http_methods(["GET", "POST"])
+@papel_requerido("admin")
 def conta_criar(request):
     return formulario(request, ContaForm, "Nova conta", "contas", reverse("financas:conta_lista"))
 
 
 @require_http_methods(["GET", "POST"])
+@papel_requerido("admin")
 def conta_editar(request, pk):
     return formulario(request, ContaForm, "Editar conta", "contas", reverse("financas:conta_lista"), da_organizacao(request, Conta, pk=pk))
 
 
 @require_http_methods(["GET", "POST"])
+@papel_requerido("admin")
 def conta_excluir(request, pk):
     return confirmar_exclusao(request, da_organizacao(request, Conta, pk=pk), "Excluir conta", "contas", reverse("financas:conta_lista"))
 
@@ -118,16 +122,19 @@ def categoria_lista(request):
 
 
 @require_http_methods(["GET", "POST"])
+@papel_requerido("admin")
 def categoria_criar(request):
     return formulario(request, CategoriaForm, "Nova categoria", "categorias", reverse("financas:categoria_lista"))
 
 
 @require_http_methods(["GET", "POST"])
+@papel_requerido("admin")
 def categoria_editar(request, pk):
     return formulario(request, CategoriaForm, "Editar categoria", "categorias", reverse("financas:categoria_lista"), da_organizacao(request, Categoria, pk=pk))
 
 
 @require_http_methods(["GET", "POST"])
+@papel_requerido("admin")
 def categoria_excluir(request, pk):
     return confirmar_exclusao(request, da_organizacao(request, Categoria, pk=pk), "Excluir categoria", "categorias", reverse("financas:categoria_lista"))
 
@@ -185,6 +192,7 @@ def lancamento_detalhe(request, pk):
 
 
 @require_http_methods(["GET", "POST"])
+@papel_requerido("admin")
 def lancamento_excluir(request, pk):
     return confirmar_exclusao(request, da_organizacao(request, Lancamento, pk=pk), "Excluir lançamento", "lancamentos", reverse("financas:lancamento_lista"), excluir_lancamento, "Todas as parcelas deste lançamento também serão excluídas. Lançamentos com parcelas pagas precisam ter os pagamentos desmarcados primeiro.")
 
@@ -203,16 +211,19 @@ def orcamento_lista(request):
 
 
 @require_http_methods(["GET", "POST"])
+@papel_requerido("admin")
 def orcamento_criar(request):
     return formulario(request, OrcamentoForm, "Novo orçamento", "orcamentos", reverse("financas:orcamento_lista"), subtitulo="Defina um limite mensal para uma categoria de despesa.")
 
 
 @require_http_methods(["GET", "POST"])
+@papel_requerido("admin")
 def orcamento_editar(request, pk):
     return formulario(request, OrcamentoForm, "Editar orçamento", "orcamentos", reverse("financas:orcamento_lista"), da_organizacao(request, Orcamento, pk=pk))
 
 
 @require_http_methods(["GET", "POST"])
+@papel_requerido("admin")
 def orcamento_excluir(request, pk):
     orcamento = da_organizacao(request, Orcamento, pk=pk)
     voltar_url = f"{reverse('financas:orcamento_lista')}?mes={orcamento.mes}&ano={orcamento.ano}"

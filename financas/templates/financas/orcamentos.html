@@ -10,7 +10,7 @@
         <h1>Orçamentos</h1>
         <p class="subtitulo">Limites por categoria de despesa. Apenas parcelas pagas com vencimento no período reduzem o disponível.</p>
     </div>
-    <a class="botao botao-primario" href="{% url 'financas:orcamento_criar' %}">Novo orçamento</a>
+    {% if user.perfil.eh_admin %}<a class="botao botao-primario" href="{% url 'financas:orcamento_criar' %}">Novo orçamento</a>{% endif %}
 </header>
 
 <section class="painel painel-filtros" aria-labelledby="titulo-periodo">
@@ -43,7 +43,7 @@
                     <div><dt>Pago</dt><dd>{{ resumo.comprometido|dinheiro }}</dd></div>
                     <div><dt>Disponível</dt><dd{% if resumo.excedido %} class="texto-perigo"{% endif %}>{{ resumo.disponivel|dinheiro }}</dd></div>
                 </dl>
-                <footer class="orcamento-acoes"><a href="{% url 'financas:orcamento_editar' resumo.orcamento.pk %}">Editar<span class="apenas-leitor"> orçamento de {{ resumo.orcamento.categoria }}</span></a><a class="link-perigo" href="{% url 'financas:orcamento_excluir' resumo.orcamento.pk %}">Excluir<span class="apenas-leitor"> orçamento de {{ resumo.orcamento.categoria }}</span></a></footer>
+                {% if user.perfil.eh_admin %}<footer class="orcamento-acoes"><a href="{% url 'financas:orcamento_editar' resumo.orcamento.pk %}">Editar<span class="apenas-leitor"> orçamento de {{ resumo.orcamento.categoria }}</span></a><a class="link-perigo" href="{% url 'financas:orcamento_excluir' resumo.orcamento.pk %}">Excluir<span class="apenas-leitor"> orçamento de {{ resumo.orcamento.categoria }}</span></a></footer>{% endif %}
             </article>
         {% endfor %}
     </section>
@@ -51,7 +51,7 @@
     <section class="painel estado-vazio" aria-labelledby="sem-orcamentos">
         <h2 id="sem-orcamentos">Nenhum orçamento neste período</h2>
         <p>Escolha outro mês ou cadastre um limite para uma categoria de despesa.</p>
-        <a class="botao botao-primario" href="{% url 'financas:orcamento_criar' %}">Criar orçamento</a>
+        {% if user.perfil.eh_admin %}<a class="botao botao-primario" href="{% url 'financas:orcamento_criar' %}">Criar orçamento</a>{% endif %}
     </section>
 {% endif %}
 {% endblock %}

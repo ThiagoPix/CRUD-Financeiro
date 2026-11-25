@@ -6,7 +6,7 @@
         <h1>{{ titulo }}<span class="ponto-titulo" aria-hidden="true">.</span></h1>
         {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
     </div>
-    <a class="botao botao-primario" href="{{ criar_url }}"><span aria-hidden="true">+</span> {% if secao == 'contas' %}Nova conta{% elif secao == 'categorias' %}Nova categoria{% else %}Novo lançamento{% endif %}</a>
+    {% if secao == 'lancamentos' or user.perfil.eh_admin %}<a class="botao botao-primario" href="{{ criar_url }}"><span aria-hidden="true">+</span> {% if secao == 'contas' %}Nova conta{% elif secao == 'categorias' %}Nova categoria{% else %}Novo lançamento{% endif %}</a>{% endif %}
 </header>
 
 {% if filtro %}
@@ -37,8 +37,8 @@
                             {% for celula in linha.celulas %}<td>{{ celula|default_if_none:"—" }}</td>{% endfor %}
                             <td><div class="acoes-tabela">
                                 {% if linha.detalhe_url %}<a href="{{ linha.detalhe_url }}">Abrir<span class="apenas-leitor"> {{ linha.celulas.0 }}</span> <span aria-hidden="true">↗</span></a>{% endif %}
-                                <a href="{{ linha.editar_url }}">Editar<span class="apenas-leitor"> {{ linha.celulas.0 }}</span></a>
-                                <a href="{{ linha.excluir_url }}" class="link-perigo">Excluir<span class="apenas-leitor"> {{ linha.celulas.0 }}</span></a>
+                                {% if secao == 'lancamentos' or user.perfil.eh_admin %}<a href="{{ linha.editar_url }}">Editar<span class="apenas-leitor"> {{ linha.celulas.0 }}</span></a>{% endif %}
+                                {% if user.perfil.eh_admin %}<a href="{{ linha.excluir_url }}" class="link-perigo">Excluir<span class="apenas-leitor"> {{ linha.celulas.0 }}</span></a>{% endif %}
                             </div></td>
                         </tr>
                     {% endfor %}
@@ -65,8 +65,8 @@
             </div>
             <div class="vazio-instrucoes">
                 <p>{{ vazio }}</p>
-                <a class="link-acao" href="{{ criar_url }}">{% if secao == 'contas' %}Cadastrar uma conta{% elif secao == 'categorias' %}Criar uma categoria{% else %}Registrar um lançamento{% endif %} <span aria-hidden="true">↗</span></a>
-                {% if secao == 'lancamentos' %}<div class="primeiros-passos"><span>Ainda não cadastrou?</span><a href="{% url 'financas:conta_criar' %}">Criar conta</a><a href="{% url 'financas:categoria_criar' %}">Criar categoria</a></div>{% endif %}
+                {% if secao == 'lancamentos' or user.perfil.eh_admin %}<a class="link-acao" href="{{ criar_url }}">{% if secao == 'contas' %}Cadastrar uma conta{% elif secao == 'categorias' %}Criar uma categoria{% else %}Registrar um lançamento{% endif %} <span aria-hidden="true">↗</span></a>{% endif %}
+                {% if secao == 'lancamentos' and user.perfil.eh_admin %}<div class="primeiros-passos"><span>Ainda não cadastrou?</span><a href="{% url 'financas:conta_criar' %}">Criar conta</a><a href="{% url 'financas:categoria_criar' %}">Criar categoria</a></div>{% endif %}
             </div>
         </div>
     {% endif %}

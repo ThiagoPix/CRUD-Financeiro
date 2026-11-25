@@ -33,7 +33,7 @@
         <div><dt>Quantidade de parcelas</dt><dd>{{ lancamento.quantidade_parcelas }}</dd></div>
         <div><dt>Tipo</dt><dd>{{ lancamento.get_tipo_display }}</dd></div>
     </dl>
-    <p class="nota-painel"><a class="link-perigo" href="{% url 'financas:lancamento_excluir' lancamento.pk %}">Excluir lançamento</a></p>
+    {% if user.perfil.eh_admin %}<p class="nota-painel"><a class="link-perigo" href="{% url 'financas:lancamento_excluir' lancamento.pk %}">Excluir lançamento</a></p>{% endif %}
 </section>
 
 <section class="painel painel-registros detalhe-parcelas" aria-labelledby="titulo-parcelas">

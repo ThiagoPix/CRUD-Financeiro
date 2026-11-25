@@ -16,19 +16,28 @@ class Organizacao(models.Model):
 
 
 class Perfil(models.Model):
+    ADMIN = "admin"
+    OPERADOR = "operador"
+    PAPEIS = [(ADMIN, "Administrador"), (OPERADOR, "Operador")]
+
     usuario = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="perfil", verbose_name="usuário"
     )
     organizacao = models.ForeignKey(
         Organizacao, on_delete=models.PROTECT, related_name="perfis", verbose_name="organização"
     )
+    papel = models.CharField("papel", max_length=10, choices=PAPEIS, default=OPERADOR)
 
     class Meta:
         verbose_name = "perfil"
         verbose_name_plural = "perfis"
 
+    @property
+    def eh_admin(self):
+        return self.papel == self.ADMIN
+
     def __str__(self):
-        return f"{self.usuario} — {self.organizacao}"
+        return f"{self.usuario} — {self.organizacao} ({self.get_papel_display()})"
 
 
 class DaOrganizacao(models.Model):
